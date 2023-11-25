@@ -10,3 +10,5 @@ add_subdirectory(ch9)
 add_subdirectory(ch10)
 
 add_subdirectory(tools)
+
+add_subdirectory(ch2_practice)
