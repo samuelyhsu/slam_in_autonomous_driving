@@ -62,7 +62,8 @@ $$
 
 ## 将实践环节中的运动学修改成带有一定角速度的平抛运动。车辆受固定的Z轴角速度影响，具有一定的初始水平速度，同时受−Z向的重力加速度影响。请修改程序，给出动画演示
 
-<video src="parabola.mp4" controls></video>
+[代码](motion.cc)
+[动画演示](parabola.mp4)
 
 ## 自行寻找相关材料，说明高斯牛顿法和Levenberg-Marquardt在处理非线性迭代时的差异
 
