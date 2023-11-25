@@ -1,8 +1,8 @@
 # CH2 PRACTICE
 
-## 分别使用左右扰动模型计算：$\frac{\partial R^{-1}p}{\partial R}$
+## 分别使用左右扰动模型计算： $\frac{\partial R^{-1}p}{\partial R}$
 
-也即计算$\frac{\partial R^{-1} p}{\partial \phi}$
+也即计算 $\frac{\partial R^{-1} p}{\partial \phi}$
 
 ### 左扰动
 
@@ -31,9 +31,9 @@ $$
 \end{aligned}
 $$
 
-## 分别使用左右扰动模型计算：$\frac{\partial R_1R_2^{-1}}{\partial R_2}$
+## 分别使用左右扰动模型计算： $\frac{\partial R_1R_2^{-1}}{\partial R_2}$
 
-也即计算$\frac{\partial\ln(R_1R_2^{-1})}{\phi}$
+也即计算 $\frac{\partial\ln(R_1R_2^{-1})}{\phi}$
 
 ### 左扰动
 
