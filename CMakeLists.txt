@@ -32,14 +32,8 @@ print_package_info(spdlog)
 find_package(GTest CONFIG REQUIRED)
 print_package_info(GTest)
 
-# find_package(Glog  REQUIRED)
-# print_package_info(Glog)
-
-# set(GFLAGS_USE_TARGET_NAMESPACE ON)
 find_package(gflags CONFIG REQUIRED)
 print_package_info(gflags)
-
-
 
 find_package(TBB CONFIG REQUIRED)
 print_package_info(TBB)
@@ -47,8 +41,8 @@ print_package_info(TBB)
 find_package(Eigen3 CONFIG REQUIRED)
 print_package_info(Eigen3)
 
-# find_package(Sophus REQUIRED)
-include_directories(${PROJECT_SOURCE_DIR}/thirdparty/sophus)
+find_package(Sophus REQUIRED)
+print_package_info(Sophus)
 
 
 find_package(suitesparse CONFIG REQUIRED)
@@ -106,22 +100,22 @@ include_directories(${PROJECT_SOURCE_DIR}/thirdparty/velodyne/include)
 
 set(third_party_libs
 # from vcpkg
-        pthread
         spdlog::spdlog
-        gflags
         Eigen3::Eigen
+        Sophus::Sophus
+        ${Pangolin_LIBRARIES}
+        SuiteSparse::cholmod
+        SuiteSparse::cxsparse
+        yaml-cpp::yaml-cpp
+# others
+        pthread
+        gflags
+        TBB::tbb
         ${g2o_libs}
         # g2o::core g2o::stuff g2o::types_sba g2o::csparse_extension
-        # Sophus::Sophus
-        ${Pangolin_LIBRARIES}
-        TBB::tbb
-        SuiteSparse::cholmod SuiteSparse::cxsparse
-        yaml-cpp::yaml-cpp
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
-# others
         ${catkin_LIBRARIES}
-        # roscpp rosbag
         )
 message(STATUS "third_party_libs=${third_party_libs}")
 

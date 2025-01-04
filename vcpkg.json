@@ -5,7 +5,8 @@
     "eigen3",
     "suitesparse",
     "pangolin",
-    "yaml-cpp"
+    "yaml-cpp",
+    "sophus"
   ],
   "builtin-baseline": "65be7019941e1401e02daaba0738cab2c8a4a355"
 }

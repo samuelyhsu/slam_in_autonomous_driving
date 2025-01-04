@@ -49,10 +49,10 @@ void IMUPreintegration::Integrate(const IMU &imu, double dt) {
     dV_dbg_ = dV_dbg_ - dR_.matrix() * dt * acc_hat * dR_dbg_;                         // (4.39c)
 
     // 旋转部分
-    Vec3d omega = gyr * dt;         // 转动量
-    Mat3d rightJ = SO3::jr(omega);  // 右雅可比
-    SO3 deltaR = SO3::exp(omega);   // exp后
-    dR_ = dR_ * deltaR;             // (4.9)
+    Vec3d omega = gyr * dt;                 // 转动量
+    Mat3d rightJ = Sophus::jr<SO3>(omega);  // 右雅可比
+    SO3 deltaR = SO3::exp(omega);           // exp后
+    dR_ = dR_ * deltaR;                     // (4.9)
 
     A.block<3, 3>(0, 0) = deltaR.matrix().transpose();
     B.block<3, 3>(0, 0) = rightJ * dt;

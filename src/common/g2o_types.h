@@ -11,9 +11,14 @@
 #include "ch4/imu_preintegration.h"
 #include "g2o/core/robust_kernel_impl.h"
 
+#include <g2o/core/base_binary_edge.h>
+#include <g2o/core/base_multi_edge.h>
+#include <g2o/core/base_unary_edge.h>
+#include <g2o/core/base_vertex.h>
+#include <g2o/core/robust_kernel.h>
+
 #include "so3_jacobi.hpp"
 #include "spdlog/spdlog.h"
-
 
 namespace sad {
 /**
@@ -203,8 +208,9 @@ class EdgeGNSS : public g2o::BaseUnaryEdge<6, SE3, VertexPose> {
         VertexPose* v = (VertexPose*)_vertices[0];
         // jacobian 6x6
         _jacobianOplusXi.setZero();
-        _jacobianOplusXi.block<3, 3>(0, 0) = (_measurement.so3().inverse() * v->estimate().so3()).jr_inv();  // dR/dR
-        _jacobianOplusXi.block<3, 3>(3, 3) = Mat3d::Identity();                                              // dp/dp
+        _jacobianOplusXi.block<3, 3>(0, 0) =
+            Sophus::jr_inv<SO3>(_measurement.so3().inverse() * v->estimate().so3());  // dR/dR
+        _jacobianOplusXi.block<3, 3>(3, 3) = Mat3d::Identity();                       // dp/dp
     }
 
     Mat6d GetHessian() {

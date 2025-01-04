@@ -1,10 +1,6 @@
 #pragma once
 
-#include <g2o/core/base_binary_edge.h>
-#include <g2o/core/base_multi_edge.h>
-#include <g2o/core/base_unary_edge.h>
-#include <g2o/core/base_vertex.h>
-#include <g2o/core/robust_kernel.h>
+#include "sophus/so3.hpp"
 
 namespace Sophus {
 
@@ -51,11 +47,17 @@ typename SO3Type::Transformation jr(const typename SO3Type::Point& Omega) {
     return jl<SO3Type>(-Omega);
 }
 template <typename SO3Type>
+typename SO3Type::Transformation jr(const SO3Type& R) {
+    return jr<SO3Type>(R.log());
+}
+
+template <typename SO3Type>
 typename SO3Type::Transformation jr_inv(const typename SO3Type::Point& Omega) {
     return jl_inv<SO3Type>(-Omega);
 }
+
 template <typename SO3Type>
 typename SO3Type::Transformation jr_inv(const SO3Type& R) {
-    return jl_inv<SO3Type>(R.log());
+    return jr_inv<SO3Type>(R.log());
 }
 }  // namespace Sophus
