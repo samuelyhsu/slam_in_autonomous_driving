@@ -7,9 +7,9 @@
 #include "ch6/loop_closing.h"
 #include "ch6/submap.h"
 
-#include <glog/logging.h>
 #include <execution>
 #include <opencv2/opencv.hpp>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -109,7 +109,6 @@ bool Mapping2D::IsKeyFrame() {
 }
 
 void Mapping2D::AddKeyFrame() {
-    LOG(INFO) << "add keyframe " << keyframe_id_;
     current_frame_->keyframe_id_ = keyframe_id_++;
     current_submap_->AddKeyFrame(current_frame_);
     last_keyframe_ = current_frame_;
@@ -142,9 +141,8 @@ void Mapping2D::ExpandSubmap() {
         loop_closing_->AddNewSubmap(current_submap_);
     }
 
-    LOG(INFO) << "create submap " << current_submap_->GetId()
-              << " with pose: " << current_submap_->GetPose().translation().transpose() << ", "
-              << current_submap_->GetPose().so2().log();
+    spdlog::info("create submap {} with pose: {}, {}", current_submap_->GetId(),
+                 current_submap_->GetPose().translation().transpose(), current_submap_->GetPose().so2().log());
 }
 
 cv::Mat Mapping2D::ShowGlobalMap(int max_size) {

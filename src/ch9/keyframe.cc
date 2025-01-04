@@ -3,10 +3,10 @@
 //
 
 #include "keyframe.h"
-#include <glog/logging.h>
 #include <pcl/io/pcd_io.h>
 #include <iomanip>
 #include "common/point_cloud_utils.h"
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -75,7 +75,7 @@ bool LoadKeyFrames(const std::string &path, std::map<IdType, std::shared_ptr<Key
         keyframes.emplace(kf->id_, kf);
     }
 
-    LOG(INFO) << "Loaded kfs: " << keyframes.size();
+    spdlog::info("Loaded kfs: {}", keyframes.size());
     return true;
 }
 }  // namespace sad

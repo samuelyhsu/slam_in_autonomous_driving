@@ -189,7 +189,7 @@ bool IESKF<S>::Predict(const IMU& imu) {
 
     double dt = imu.timestamp_ - current_time_;
     if (dt > (5 * options_.imu_dt_) || dt < 0) {
-        LOG(INFO) << "skip this imu because dt_ = " << dt;
+        spdlog::info("skip this imu because dt_ = {}", dt);
         current_time_ = imu.timestamp_;
         return false;
     }
@@ -236,7 +236,6 @@ bool IESKF<S>::UpdateUsingCustomObserve(IESKF::CustomObsFunc obs) {
         // 卡尔曼更新
         Qk = (Pk.inverse() + HTVH).inverse();  // 这个记作中间变量，最后更新时可以用
         dx_ = Qk * HTVr;
-        // LOG(INFO) << "iter " << iter << " dx = " << dx_.transpose() << ", dxn: " << dx_.norm();
 
         // dx合入名义变量
         Update();

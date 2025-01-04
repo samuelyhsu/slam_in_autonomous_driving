@@ -13,7 +13,7 @@
 #include <g2o/core/sparse_optimizer.h>
 #include <g2o/solvers/cholmod/linear_solver_cholmod.h>
 
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -68,7 +68,6 @@ bool MRLikelihoodField::AlignG2O(SE2& init_pose) {
 
     /// 成功匹配的话，打印一些信息
     for (int l = 0; l < levels_; ++l) {
-        LOG(INFO) << "level " << l << " inliers: " << num_inliers_[l] << ", ratio: " << inlier_ratio_[l];
     }
 
     return true;
@@ -178,7 +177,7 @@ bool MRLikelihoodField::AlignInLevel(int level, SE2& init_pose) {
         init_pose = v->estimate();
         return true;
     } else {
-        // LOG(INFO) << "rejected because ratio is not enough: " << inlier_ratio;
+        //
         return false;
     }
 }

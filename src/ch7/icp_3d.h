@@ -42,7 +42,7 @@ class Icp3d {
         target_center_ = std::accumulate(target->points.begin(), target_->points.end(), Vec3d::Zero().eval(),
                                          [](const Vec3d& c, const PointType& pt) -> Vec3d { return c + ToVec3d(pt); }) /
                          target_->size();
-        LOG(INFO) << "target center: " << target_center_.transpose();
+        spdlog::info("target center: {}", target_center_.transpose());
     }
 
     /// 设置被配准的Scan
@@ -51,7 +51,7 @@ class Icp3d {
         source_center_ = std::accumulate(source_->points.begin(), source_->points.end(), Vec3d::Zero().eval(),
                                          [](const Vec3d& c, const PointType& pt) -> Vec3d { return c + ToVec3d(pt); }) /
                          source_->size();
-        LOG(INFO) << "source center: " << source_center_.transpose();
+        spdlog::info("source center: {}", source_center_.transpose());
     }
 
     void SetGroundTruth(const SE3& gt_pose) {

@@ -13,11 +13,9 @@ add_library(${PROJECT_NAME}.ch7
         loosely_coupled_lio/measure_sync.cc
         )
 
-target_link_libraries(${PROJECT_NAME}.ch7
+target_link_libraries(${PROJECT_NAME}.ch7 PUBLIC
         ${PROJECT_NAME}.ch3
         ${PROJECT_NAME}.ch5
-        ${PROJECT_NAME}.common
-        ${third_party_libs}
         )
 
 add_executable(test_icp
@@ -27,8 +25,8 @@ add_executable(test_icp
 target_link_libraries(test_icp
         ${PROJECT_NAME}.ch5
         ${PROJECT_NAME}.ch7
-        ${PROJECT_NAME}.common
-        ${third_party_libs}
+        
+        
         )
 
 add_executable(test_ndt_lo
@@ -38,8 +36,8 @@ add_executable(test_ndt_lo
 target_link_libraries(test_ndt_lo
         ${PROJECT_NAME}.ch5
         ${PROJECT_NAME}.ch7
-        ${PROJECT_NAME}.common
-        ${third_party_libs}
+        
+        
         )
 
 add_executable(test_inc_ndt_lo
@@ -49,8 +47,8 @@ add_executable(test_inc_ndt_lo
 target_link_libraries(test_inc_ndt_lo
         ${PROJECT_NAME}.ch5
         ${PROJECT_NAME}.ch7
-        ${PROJECT_NAME}.common
-        ${third_party_libs}
+        
+        
         )
 
 add_executable(test_feature_extraction
@@ -60,8 +58,8 @@ add_executable(test_feature_extraction
 target_link_libraries(test_feature_extraction
         ${PROJECT_NAME}.ch5
         ${PROJECT_NAME}.ch7
-        ${PROJECT_NAME}.common
-        ${third_party_libs}
+        
+        
         )
 
 add_executable(test_loam_odom
@@ -71,8 +69,8 @@ add_executable(test_loam_odom
 target_link_libraries(test_loam_odom
         ${PROJECT_NAME}.ch5
         ${PROJECT_NAME}.ch7
-        ${PROJECT_NAME}.common
-        ${third_party_libs}
+        
+        
         )
 
 add_executable(test_loosely_lio
@@ -82,8 +80,8 @@ add_executable(test_loosely_lio
 target_link_libraries(test_loosely_lio
         ${PROJECT_NAME}.ch5
         ${PROJECT_NAME}.ch7
-        ${PROJECT_NAME}.common
-        ${third_party_libs}
+        
+        
         )
 
 add_executable(run_gen_simu_data
@@ -93,6 +91,6 @@ add_executable(run_gen_simu_data
 target_link_libraries(run_gen_simu_data
         ${PROJECT_NAME}.ch5
         ${PROJECT_NAME}.ch7
-        ${PROJECT_NAME}.common
-        ${third_party_libs}
+        
+        
         )

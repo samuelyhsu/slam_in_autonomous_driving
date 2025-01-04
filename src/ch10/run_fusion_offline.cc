@@ -2,9 +2,9 @@
 // Created by xiang on 22-12-20.
 //
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <yaml-cpp/yaml.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include "common/io_utils.h"
 #include "fusion.h"
@@ -12,9 +12,6 @@
 DEFINE_string(config_yaml, "./config/mapping.yaml", "配置文件");
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     sad::Fusion fusion(FLAGS_config_yaml);
@@ -42,7 +39,7 @@ int main(int argc, char** argv) {
         })
         .Go();
 
-    LOG(INFO) << "done.";
+    spdlog::info("done.");
     sleep(10);
     return 0;
 }

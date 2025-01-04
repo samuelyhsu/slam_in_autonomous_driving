@@ -3,13 +3,13 @@
 //
 #include "common/io_utils.h"
 
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
 void TxtIO::Go() {
     if (!fin) {
-        LOG(ERROR) << "未能找到文件";
+        spdlog::error("未能找到文件");
         return;
     }
 
@@ -48,7 +48,7 @@ void TxtIO::Go() {
         }
     }
 
-    LOG(INFO) << "done.";
+    spdlog::info("done.");
 }
 
 std::string RosbagIO::GetLidarTopicName() const {
@@ -71,10 +71,10 @@ std::string RosbagIO::GetLidarTopicName() const {
 
 void RosbagIO::Go() {
     rosbag::Bag bag(bag_file_);
-    LOG(INFO) << "running in " << bag_file_ << ", reg process func: " << process_func_.size();
+    spdlog::info("running in {}, reg process func: {}", bag_file_, process_func_.size());
 
     if (!bag.isOpen()) {
-        LOG(ERROR) << "cannot open " << bag_file_;
+        spdlog::error("cannot open {}", bag_file_);
         return;
     }
 
@@ -91,7 +91,7 @@ void RosbagIO::Go() {
     }
 
     bag.close();
-    LOG(INFO) << "bag " << bag_file_ << " finished.";
+    spdlog::info("bag {} finished.", bag_file_);
 }
 
 RosbagIO &RosbagIO::AddImuHandle(RosbagIO::ImuHandle f) {
@@ -131,7 +131,7 @@ std::string RosbagIO::GetIMUTopicName() const {
     } else if (dataset_type_ == DatasetType::AVIA) {
         return avia_imu_topic;
     } else {
-        LOG(ERROR) << "cannot load imu topic name of dataset " << int(dataset_type_);
+        spdlog::error("cannot load imu topic name of dataset {}", int(dataset_type_));
     }
 
     return "";

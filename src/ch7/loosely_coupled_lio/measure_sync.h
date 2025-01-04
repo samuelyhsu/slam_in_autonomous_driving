@@ -9,8 +9,8 @@
 #include "common/imu.h"
 #include "common/point_types.h"
 
-#include <glog/logging.h>
 #include <deque>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -40,7 +40,7 @@ class MessageSync {
     void ProcessIMU(IMUPtr imu) {
         double timestamp = imu->timestamp_;
         if (timestamp < last_timestamp_imu_) {
-            LOG(WARNING) << "imu loop back, clear buffer";
+            spdlog::warn("imu loop back, clear buffer");
             imu_buffer_.clear();
         }
 
@@ -54,7 +54,7 @@ class MessageSync {
      */
     void ProcessCloud(const sensor_msgs::PointCloud2::ConstPtr &msg) {
         if (msg->header.stamp.toSec() < last_timestamp_lidar_) {
-            LOG(ERROR) << "lidar loop back, clear buffer";
+            spdlog::error("lidar loop back, clear buffer");
             lidar_buffer_.clear();
         }
 
@@ -70,7 +70,7 @@ class MessageSync {
     /// 处理Livox点云
     void ProcessCloud(const livox_ros_driver::CustomMsg::ConstPtr &msg) {
         if (msg->header.stamp.toSec() < last_timestamp_lidar_) {
-            LOG(WARNING) << "lidar loop back, clear buffer";
+            spdlog::warn("lidar loop back, clear buffer");
             lidar_buffer_.clear();
         }
 

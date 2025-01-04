@@ -55,4 +55,7 @@ using NavStatef = NavState<float>;
 
 }  // namespace sad
 
+template <typename T>
+struct fmt::formatter<sad::NavState<T>> : ostream_formatter {};
+
 #endif

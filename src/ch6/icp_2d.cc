@@ -5,9 +5,9 @@
 #include "ch6/icp_2d.h"
 #include "common/math_utils.h"
 
-#include <glog/logging.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/impl/kdtree.hpp>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -72,16 +72,14 @@ bool Icp2d::AlignGaussNewton(SE2& init_pose) {
             break;
         }
 
-        LOG(INFO) << "iter " << iter << " cost = " << cost << ", effect num: " << effective_num;
-
         current_pose.translation() += dx.head<2>();
         current_pose.so2() = current_pose.so2() * SO2::exp(dx[2]);
         lastCost = cost;
     }
 
     init_pose = current_pose;
-    LOG(INFO) << "estimated pose: " << current_pose.translation().transpose()
-              << ", theta: " << current_pose.so2().log();
+
+    spdlog::info("estimated pose: {}, theta: {}", current_pose.translation().transpose(), current_pose.so2().log());
 
     return true;
 }
@@ -162,23 +160,21 @@ bool Icp2d::AlignGaussNewtonPoint2Plane(SE2& init_pose) {
             break;
         }
 
-        LOG(INFO) << "iter " << iter << " cost = " << cost << ", effect num: " << effective_num;
-
         current_pose.translation() += dx.head<2>();
         current_pose.so2() = current_pose.so2() * SO2::exp(dx[2]);
         lastCost = cost;
     }
 
     init_pose = current_pose;
-    LOG(INFO) << "estimated pose: " << current_pose.translation().transpose()
-              << ", theta: " << current_pose.so2().log();
+
+    spdlog::info("estimated pose: {}, theta: {}", current_pose.translation().transpose(), current_pose.so2().log());
 
     return true;
 }
 
 void Icp2d::BuildTargetKdTree() {
     if (target_scan_ == nullptr) {
-        LOG(ERROR) << "target is not set";
+        spdlog::error("target is not set");
         return;
     }
 

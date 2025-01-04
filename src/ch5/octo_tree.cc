@@ -121,7 +121,8 @@ Box3D OctoTree::ComputeBoundingBox() {
 
 bool OctoTree::GetClosestPoint(const PointType &pt, std::vector<int> &closest_idx, int k) const {
     if (k > size_) {
-        LOG(ERROR) << "cannot set k larger than cloud size: " << k << ", " << size_;
+        //
+        spdlog::error("cannot set k larger than cloud size: {}, {}", k, size_);
         return false;
     }
 

@@ -1,8 +1,8 @@
 // // Created by xiang on 2021/8/9.
 //
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
@@ -22,7 +22,8 @@ DEFINE_double(lidar_height, 1.128, "雷达安装高度");
 void GenerateRangeImage(PointCloudType::Ptr cloud) {
     int image_cols = int(360 / FLAGS_azimuth_resolution_deg);  // 水平为360度，按分辨率切分即可
     int image_rows = FLAGS_elevation_rows;                     // 图像行数固定
-    LOG(INFO) << "range image: " << image_rows << "x" << image_cols;
+    //
+    spdlog::info("range image: {}x{}", image_rows, image_cols);
 
     // 我们生成一个HSV图像以更好地显示图像
     cv::Mat image(image_rows, image_cols, CV_8UC3, cv::Scalar(0, 0, 0));
@@ -58,13 +59,10 @@ void GenerateRangeImage(PointCloudType::Ptr cloud) {
 }
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     if (FLAGS_pcd_path.empty()) {
-        LOG(ERROR) << "pcd path is empty";
+        spdlog::error("pcd path is empty");
         return -1;
     }
 
@@ -73,11 +71,12 @@ int main(int argc, char** argv) {
     pcl::io::loadPCDFile(FLAGS_pcd_path, *cloud);
 
     if (cloud->empty()) {
-        LOG(ERROR) << "cannot load cloud file";
+        spdlog::error("cannot load cloud file");
         return -1;
     }
 
-    LOG(INFO) << "cloud points: " << cloud->size();
+    //
+    spdlog::info("cloud points: {}", cloud->size());
     GenerateRangeImage(cloud);
 
     return 0;

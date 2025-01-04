@@ -2,8 +2,8 @@
 // Created by xiang on 2022/7/18.
 //
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include "ch7/loam-like/loam_like_odom.h"
 #include "common/io_utils.h"
@@ -14,9 +14,6 @@ DEFINE_string(topic, "/velodyne_packets_1", "topic of lidar packets");
 DEFINE_bool(display_map, true, "display map?");
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     // 测试loam-like odometry的表现
@@ -24,7 +21,7 @@ int main(int argc, char** argv) {
     options.display_realtime_cloud_ = FLAGS_display_map;
     sad::LoamLikeOdom lo(options);
 
-    LOG(INFO) << "using topic: " << FLAGS_topic;
+    spdlog::info("using topic: {}", FLAGS_topic);
     sad::RosbagIO bag_io(fLS::FLAGS_bag_path);
     bag_io
         .AddVelodyneHandle(FLAGS_topic,
@@ -37,7 +34,7 @@ int main(int argc, char** argv) {
     lo.SaveMap("./data/ch7/loam_map.pcd");
 
     sad::common::Timer::PrintAll();
-    LOG(INFO) << "done.";
+    spdlog::info("done.");
 
     return 0;
 }

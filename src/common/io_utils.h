@@ -187,7 +187,7 @@ class RosbagIO {
         return AddHandle(GetLidarTopicName(), [f, this](const rosbag::MessageInstance &m) -> bool {
             auto msg = m.instantiate<livox_ros_driver::CustomMsg>();
             if (msg == nullptr) {
-                LOG(INFO) << "cannot inst: " << m.getTopic();
+                spdlog::info("cannot inst: {}", m.getTopic());
                 return false;
             }
             return f(msg);

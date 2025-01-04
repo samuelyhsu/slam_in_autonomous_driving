@@ -6,9 +6,9 @@
 #include "common/lidar_utils.h"
 #include "common/math_utils.h"
 
-#include <glog/logging.h>
 #include <Eigen/SVD>
 #include <execution>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -67,13 +67,13 @@ void Ndt3d::BuildVoxels() {
 }
 
 bool Ndt3d::AlignNdt(SE3& init_pose) {
-    LOG(INFO) << "aligning with ndt";
+    spdlog::info("aligning with ndt");
     assert(grids_.empty() == false);
 
     SE3 pose = init_pose;
     if (options_.remove_centroid_) {
         pose.translation() = target_center_ - source_center_;  // 设置平移初始值
-        LOG(INFO) << "init trans set to " << pose.translation().transpose();
+        spdlog::info("init trans set to {}", pose.translation().transpose());
     }
 
     // 对点的索引，预先生成
@@ -157,7 +157,7 @@ bool Ndt3d::AlignNdt(SE3& init_pose) {
         }
 
         if (effective_num < options_.min_effective_pts_) {
-            LOG(WARNING) << "effective num too small: " << effective_num;
+            spdlog::warn("effective num too small: {}", effective_num);
             return false;
         }
 
@@ -166,21 +166,23 @@ bool Ndt3d::AlignNdt(SE3& init_pose) {
         pose.translation() += dx.tail<3>();
 
         // 更新
-        LOG(INFO) << "iter " << iter << " total res: " << total_res << ", eff: " << effective_num
-                  << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm()
-                  << ", dx: " << dx.transpose();
+        //              << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm()
+        //              << ", dx: " << dx.transpose();
+        spdlog::info("iter {} total res: {}, eff: {}, mean res: {}, dxn: {}, dx: {}", iter, total_res, effective_num,
+                     total_res / effective_num, dx.norm(), dx.transpose());
 
         // std::sort(chi2.begin(), chi2.end());
-        // LOG(INFO) << "chi2 med: " << chi2[chi2.size() / 2] << ", .7: " << chi2[chi2.size() * 0.7]
         //           << ", .9: " << chi2[chi2.size() * 0.9] << ", max: " << chi2.back();
+        // spdlog::info("pose: {}, {}", pose.translation().transpose(),
+        // pose.so3().unit_quaternion().coeffs().transpose());
 
         if (gt_set_) {
             double pose_error = (gt_pose_.inverse() * pose).log().norm();
-            LOG(INFO) << "iter " << iter << " pose error: " << pose_error;
+            spdlog::info("iter {} pose error: {}", iter, pose_error);
         }
 
         if (dx.norm() < options_.eps_) {
-            LOG(INFO) << "converged, dx = " << dx.transpose();
+            spdlog::info("converged, dx = {}", dx.transpose());
             break;
         }
     }

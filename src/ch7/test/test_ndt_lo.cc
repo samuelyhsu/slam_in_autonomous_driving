@@ -2,8 +2,8 @@
 // Created by xiang on 2022/7/18.
 //
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include "ch7/direct_ndt_lo.h"
 #include "ch7/ndt_3d.h"
@@ -21,9 +21,6 @@ DEFINE_bool(use_ndt_nearby_6, false, "use ndt nearby 6?");
 DEFINE_bool(display_map, true, "display map?");
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     sad::RosbagIO rosbag_io(fLS::FLAGS_bag_path, sad::Str2DatasetType(FLAGS_dataset_type));
@@ -53,7 +50,7 @@ int main(int argc, char** argv) {
     }
 
     sad::common::Timer::PrintAll();
-    LOG(INFO) << "done.";
+    spdlog::info("done.");
 
     return 0;
 }

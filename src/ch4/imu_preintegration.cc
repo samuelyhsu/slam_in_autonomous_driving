@@ -1,5 +1,7 @@
 #include "imu_preintegration.h"
-#include <glog/logging.h>
+#include "common/g2o_types.h"
+#include "g2o_types.h"
+#include "spdlog/spdlog.h"
 
 namespace sad {
 

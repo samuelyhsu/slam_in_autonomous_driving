@@ -1,10 +1,10 @@
 //
 // Created by xiang on 2022/3/15.
 //
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <fstream>
 #include <opencv2/highgui.hpp>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include "ch6/frame.h"
 #include "ch6/lidar_2d_utils.h"
@@ -13,9 +13,6 @@
 /// 测试多分辨率的匹配
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     std::ifstream fin("./data/ch6/loops.txt");
@@ -44,8 +41,6 @@ int main(int argc, char** argv) {
         sad::Frame frame;
         frame.Load("./data/ch6/frame_" + std::to_string(frame_id) + ".txt");
         mr_field.SetSourceScan(frame.scan_);
-
-        LOG(INFO) << "testing frame " << frame.id_ << " with " << submap_id;
 
         auto init_pose = frame.pose_;
         auto frame_pose_in_submap = pose_submap.inverse() * frame.pose_;

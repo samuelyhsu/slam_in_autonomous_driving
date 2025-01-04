@@ -2,8 +2,8 @@
 // Created by xiang on 2021/8/9.
 //
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
@@ -59,13 +59,10 @@ void GenerateBEVImage(PointCloudType::Ptr cloud) {
 }
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     if (FLAGS_pcd_path.empty()) {
-        LOG(ERROR) << "pcd path is empty";
+        spdlog::error("pcd path is empty");
         return -1;
     }
 
@@ -74,11 +71,12 @@ int main(int argc, char** argv) {
     pcl::io::loadPCDFile(FLAGS_pcd_path, *cloud);
 
     if (cloud->empty()) {
-        LOG(ERROR) << "cannot load cloud file";
+        spdlog::error("cannot load cloud file");
         return -1;
     }
 
-    LOG(INFO) << "cloud points: " << cloud->size();
+    //
+    spdlog::info("cloud points: {}", cloud->size());
     GenerateBEVImage(cloud);
 
     return 0;

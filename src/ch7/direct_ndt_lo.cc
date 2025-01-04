@@ -98,11 +98,11 @@ SE3 DirectNDTLO::AlignWithLocalMap(CloudPtr scan) {
         }
     }
 
-    LOG(INFO) << "pose: " << guess.translation().transpose() << ", "
-              << guess.so3().unit_quaternion().coeffs().transpose();
+    //              << guess.so3().unit_quaternion().coeffs().transpose();
+    spdlog::info("pose: {}, {}", guess.translation().transpose(), guess.so3().unit_quaternion().coeffs().transpose());
 
     if (options_.use_pcl_ndt_) {
-        LOG(INFO) << "trans prob: " << ndt_pcl_.getTransformationProbability();
+        spdlog::info("trans prob: {}", ndt_pcl_.getTransformationProbability());
     }
 
     estimated_poses_.emplace_back(guess);

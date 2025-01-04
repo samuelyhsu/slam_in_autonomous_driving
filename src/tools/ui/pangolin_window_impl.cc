@@ -1,6 +1,6 @@
-#include <glog/logging.h>
 #include <string>
 #include <thread>
+#include "spdlog/spdlog.h"
 
 #include <pangolin/display/default_font.h>
 #include "tools/ui/pangolin_window_impl.h"

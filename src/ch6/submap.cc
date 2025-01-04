@@ -3,7 +3,7 @@
 //
 
 #include "ch6/submap.h"
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 

@@ -4,12 +4,12 @@
 
 #include "loopclosure.h"
 
-#include <glog/logging.h>
 #include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/registration/ndt.h>
 #include <yaml-cpp/yaml.h>
 #include <execution>
+#include "spdlog/spdlog.h"
 
 #include "common/lidar_utils.h"
 #include "common/point_cloud_utils.h"
@@ -20,10 +20,10 @@ LoopClosure::LoopClosure(const std::string& config_yaml) : yaml_(config_yaml) {}
 
 bool LoopClosure::Init() {
     if (!LoadKeyFrames("./data/ch9/keyframes.txt", keyframes_)) {
-        LOG(ERROR) << "cannot load keyframes";
+        spdlog::error("cannot load keyframes");
         return false;
     }
-    LOG(INFO) << "keyframes: " << keyframes_.size();
+    spdlog::info("keyframes: {}", keyframes_.size());
 
     auto yaml = YAML::LoadFile(yaml_);
     min_id_interval_ = yaml["loop_closing"]["min_id_interval"].as<int>();
@@ -44,7 +44,7 @@ void LoopClosure::DetectLoopCandidates() {
     KFPtr check_first = nullptr;
     KFPtr check_second = nullptr;
 
-    LOG(INFO) << "detecting loop candidates from pose in stage 1";
+    spdlog::info("detecting loop candidates from pose in stage 1");
 
     // 本质上是两重循环
     for (auto iter_first = keyframes_.begin(); iter_first != keyframes_.end(); ++iter_first) {
@@ -81,7 +81,7 @@ void LoopClosure::DetectLoopCandidates() {
             }
         }
     }
-    LOG(INFO) << "detected candidates: " << loop_candiates_.size();
+    spdlog::info("detected candidates: {}", loop_candiates_.size());
 }
 
 void LoopClosure::ComputeLoopCandidates() {
@@ -95,13 +95,13 @@ void LoopClosure::ComputeLoopCandidates() {
             succ_candidates.emplace_back(lc);
         }
     }
-    LOG(INFO) << "success: " << succ_candidates.size() << "/" << loop_candiates_.size();
+    spdlog::info("success: {}/{}", succ_candidates.size(), loop_candiates_.size());
 
     loop_candiates_.swap(succ_candidates);
 }
 
 void LoopClosure::ComputeForCandidate(sad::LoopCandidate& c) {
-    LOG(INFO) << "aligning " << c.idx1_ << " with " << c.idx2_;
+    spdlog::info("aligning {} with {}", c.idx1_, c.idx2_);
     const int submap_idx_range = 40;
     KFPtr kf1 = keyframes_.at(c.idx1_), kf2 = keyframes_.at(c.idx2_);
 

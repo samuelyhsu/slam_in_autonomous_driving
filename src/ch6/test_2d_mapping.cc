@@ -1,9 +1,9 @@
 //
 // Created by xiang on 2022/3/15.
 //
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <opencv2/highgui.hpp>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include "ch6/lidar_2d_utils.h"
 #include "ch6/mapping_2d.h"
@@ -15,9 +15,6 @@ DEFINE_bool(with_loop_closing, false, "是否使用回环检测");
 /// 测试2D lidar SLAM
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     sad::RosbagIO rosbag_io(fLS::FLAGS_bag_path);

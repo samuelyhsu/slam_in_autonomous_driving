@@ -85,7 +85,7 @@ void Fusion::TryInitIMU() {
         eskf_.SetInitialConditions(options, imu_init_.GetInitBg(), imu_init_.GetInitBa(), imu_init_.GetGravity());
         imu_need_init_ = false;
 
-        LOG(INFO) << "IMU初始化成功";
+        spdlog::info("IMU初始化成功");
     }
 }
 
@@ -151,7 +151,7 @@ void Fusion::Align() {
 bool Fusion::SearchRTK() {
     if (init_has_failed_) {
         if ((last_gnss_->utm_pose_.translation() - last_searched_pos_.translation()).norm() < 20.0) {
-            LOG(INFO) << "skip this position";
+            spdlog::info("skip this position");
             return false;
         }
     }
@@ -169,16 +169,16 @@ bool Fusion::SearchRTK() {
         search_poses.emplace_back(gr);
     }
 
-    LOG(INFO) << "grid search poses: " << search_poses.size();
+    spdlog::info("grid search poses: {}", search_poses.size());
     std::for_each(std::execution::par_unseq, search_poses.begin(), search_poses.end(),
                   [this](GridSearchResult& gr) { AlignForGrid(gr); });
 
     // 选择最优的匹配结果
     auto max_ele = std::max_element(search_poses.begin(), search_poses.end(),
                                     [](const auto& g1, const auto& g2) { return g1.score_ < g2.score_; });
-    LOG(INFO) << "max score: " << max_ele->score_ << ", pose: \n" << max_ele->result_pose_.matrix();
+    spdlog::info("max score: {}, pose: \n{}", max_ele->score_, max_ele->result_pose_.matrix());
     if (max_ele->score_ > rtk_search_min_score_) {
-        LOG(INFO) << "初始化成功, score: " << max_ele->score_ << ">" << rtk_search_min_score_;
+        spdlog::info("初始化成功, score: {} > {}", max_ele->score_, rtk_search_min_score_);
         status_ = Status::WORKING;
 
         /// 重置滤波器状态
@@ -237,7 +237,7 @@ bool Fusion::LidarLocalization() {
     SE3 pose = Mat4ToSE3(ndt_.getFinalTransformation());
     eskf_.ObserveSE3(pose, 1e-1, 1e-2);
 
-    LOG(INFO) << "lidar loc score: " << ndt_.getTransformationProbability();
+    spdlog::info("lidar loc score: {}", ndt_.getTransformationProbability());
 
     return true;
 }
@@ -284,7 +284,7 @@ void Fusion::LoadMap(const SE3& pose) {
         }
     }
 
-    LOG(INFO) << "new loaded: " << cnt_new_loaded << ", unload: " << cnt_unload;
+    spdlog::info("new loaded: {}, unload: {}", cnt_new_loaded, cnt_unload);
     if (map_data_changed) {
         // rebuild ndt target map
         ref_cloud_.reset(new PointCloudType);
@@ -292,7 +292,7 @@ void Fusion::LoadMap(const SE3& pose) {
             *ref_cloud_ += *mp.second;
         }
 
-        LOG(INFO) << "rebuild global cloud, grids: " << map_data_.size();
+        spdlog::info("rebuild global cloud, grids: {}", map_data_.size());
         ndt_.setInputTarget(ref_cloud_);
     }
 

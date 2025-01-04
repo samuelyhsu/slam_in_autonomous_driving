@@ -5,7 +5,6 @@
 #ifndef MAPPING_MATH_UTILS_H
 #define MAPPING_MATH_UTILS_H
 
-#include <glog/logging.h>
 #include <boost/array.hpp>
 #include <boost/math/tools/precision.hpp>
 #include <iomanip>
@@ -13,6 +12,7 @@
 #include <map>
 #include <numeric>
 #include <opencv2/core.hpp>
+#include "spdlog/spdlog.h"
 
 /// 常用的数学函数
 namespace sad::math {
@@ -208,7 +208,7 @@ bool CheckNaN(const Eigen::Matrix<S, rows, cols>& m) {
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
             if (std::isnan(m(i, j))) {
-                LOG(ERROR) << "matrix has nan: \n" << m;
+                spdlog::error("matrix has nan: \n{}", m);
                 return true;
             }
         }
@@ -382,7 +382,7 @@ void limit_in_range(T&& num, T2&& min_limit, T2&& max_limit) {
 template <typename T>
 inline bool esti_plane_dynamic(Eigen::Matrix<T, 4, 1>& abcd, const std::vector<Vec3d>& point, const double& threshold) {
     if (point.size() < 3) {
-        LOG(ERROR) << "the number of points should not be less than 3, given " << point.size();
+        spdlog::error("the number of points should not be less than 3, given {}", point.size());
         return false;
     }
     // Marked by xiaotao:
@@ -448,7 +448,7 @@ template <typename T, typename C, typename FT, typename FP>
 inline bool PoseInterp(double query_time, C&& data, FT&& take_time_func, FP&& take_pose_func, SE3& result,
                        T& best_match, float time_th = 0.5) {
     if (data.empty()) {
-        LOG(INFO) << "cannot interp because data is empty. ";
+        spdlog::info("cannot interp because data is empty. ");
         return false;
     }
 
@@ -680,13 +680,12 @@ template <typename T>
 bool PoseInterp(double query_time, const std::map<double, T>& data, const std::function<SE3(const T&)>& take_pose_func,
                 SE3& result, T& best_match) {
     if (data.empty()) {
-        LOG(INFO) << "data is empty";
+        spdlog::info("data is empty");
         return false;
     }
 
     if (query_time > data.rbegin()->first) {
-        LOG(INFO) << "query time is later than last, " << std::setprecision(18) << ", query: " << query_time
-                  << ", end time: " << data.rbegin()->first;
+        spdlog::info("query time is later than last, query: {}, end time: {}", query_time, data.rbegin()->first);
 
         return false;
     }

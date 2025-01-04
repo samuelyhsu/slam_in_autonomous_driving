@@ -4,32 +4,35 @@
 
 #include "timer.h"
 
-#include <glog/logging.h>
 #include <fstream>
 #include <numeric>
+#include "spdlog/spdlog.h"
 
 namespace sad::common {
 
 std::map<std::string, Timer::TimerRecord> Timer::records_;
 
 void Timer::PrintAll() {
-    LOG(INFO) << ">>> ===== Printing run time =====";
+    spdlog::info(">>> ===== Printing run time =====");
     for (const auto& r : records_) {
-        LOG(INFO) << "> [ " << r.first << " ] average time usage: "
-                  << std::accumulate(r.second.time_usage_in_ms_.begin(), r.second.time_usage_in_ms_.end(), 0.0) /
-                         double(r.second.time_usage_in_ms_.size())
-                  << " ms , called times: " << r.second.time_usage_in_ms_.size();
+        //              << std::accumulate(r.second.time_usage_in_ms_.begin(), r.second.time_usage_in_ms_.end(), 0.0) /
+        //                     double(r.second.time_usage_in_ms_.size())
+        //              << " ms , called times: " << r.second.time_usage_in_ms_.size();
+        spdlog::info("> [{}] average time usage: {} ms , called times: {}", r.first,
+                     std::accumulate(r.second.time_usage_in_ms_.begin(), r.second.time_usage_in_ms_.end(), 0.0) /
+                         double(r.second.time_usage_in_ms_.size()),
+                     r.second.time_usage_in_ms_.size());
     }
-    LOG(INFO) << ">>> ===== Printing run time end =====";
+    spdlog::info(">>> ===== Printing run time end =====");
 }
 
 void Timer::DumpIntoFile(const std::string& file_name) {
     std::ofstream ofs(file_name, std::ios::out);
     if (!ofs.is_open()) {
-        LOG(ERROR) << "Failed to open file: " << file_name;
+        spdlog::error("Failed to open file: {}", file_name);
         return;
     } else {
-        LOG(INFO) << "Dump Time Records into file: " << file_name;
+        spdlog::info("Dump Time Records into file: {}", file_name);
     }
 
     size_t max_length = 0;
@@ -64,4 +67,4 @@ double Timer::GetMeanTime(const std::string& func_name) {
            double(r.time_usage_in_ms_.size());
 }
 
-}  // namespace sad::utils
+}  // namespace sad::common

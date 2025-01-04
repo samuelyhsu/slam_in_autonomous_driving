@@ -2,14 +2,14 @@
 // Created by xiang on 2021/7/16.
 //
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <gtest/gtest.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include "ch3/eskf.hpp"
 #include "ch3/static_imu_init.h"
-#include "ch4/imu_preintegration.h"
 #include "ch4/g2o_types.h"
+#include "ch4/imu_preintegration.h"
 #include "common/g2o_types.h"
 #include "common/io_utils.h"
 
@@ -68,15 +68,21 @@ TEST(PREINTEGRATION_TEST, ROTATION_TEST) {
 
     end_status = pre_integ.Predict(start_status);
 
-    LOG(INFO) << "preinteg result: ";
-    LOG(INFO) << "end rotation: \n" << end_status.R_.matrix();
-    LOG(INFO) << "end trans: \n" << end_status.p_.transpose();
-    LOG(INFO) << "end v: \n" << end_status.v_.transpose();
+    spdlog::info("preinteg result: ");
+    //
+    //
+    //
+    spdlog::info("end rotation: \n{}", end_status.R_.matrix());
+    spdlog::info("end trans: \n{}", end_status.p_.transpose());
+    spdlog::info("end v: \n{}", end_status.v_.transpose());
 
-    LOG(INFO) << "direct integ result: ";
-    LOG(INFO) << "end rotation: \n" << R.matrix();
-    LOG(INFO) << "end trans: \n" << t.transpose();
-    LOG(INFO) << "end v: \n" << v.transpose();
+    spdlog::info("direct integ result: ");
+    //
+    //
+    //
+    spdlog::info("end rotation: \n{}", R.matrix());
+    spdlog::info("end trans: \n{}", t.transpose());
+    spdlog::info("end v: \n{}", v.transpose());
     SUCCEED();
 }
 
@@ -120,15 +126,21 @@ TEST(PREINTEGRATION_TEST, ACCELERATION_TEST) {
     }
 
     end_status = pre_integ.Predict(start_status);
-    LOG(INFO) << "preinteg result: ";
-    LOG(INFO) << "end rotation: \n" << end_status.R_.matrix();
-    LOG(INFO) << "end trans: \n" << end_status.p_.transpose();
-    LOG(INFO) << "end v: \n" << end_status.v_.transpose();
+    spdlog::info("preinteg result: ");
+    //
+    //
+    //
+    spdlog::info("end rotation: \n{}", end_status.R_.matrix());
+    spdlog::info("end trans: \n{}", end_status.p_.transpose());
+    spdlog::info("end v: \n{}", end_status.v_.transpose());
 
-    LOG(INFO) << "direct integ result: ";
-    LOG(INFO) << "end rotation: \n" << R.matrix();
-    LOG(INFO) << "end trans: \n" << t.transpose();
-    LOG(INFO) << "end v: \n" << v.transpose();
+    spdlog::info("direct integ result: ");
+    //
+    //
+    //
+    spdlog::info("end rotation: \n{}", R.matrix());
+    spdlog::info("end trans: \n{}", t.transpose());
+    spdlog::info("end v: \n{}", v.transpose());
     SUCCEED();
 }
 
@@ -233,11 +245,14 @@ TEST(PREINTEGRATION_TEST, ESKF_TEST) {
             if (last_state_set && last_gnss_set) {
                 auto update_state = eskf.GetNominalState();
 
-                LOG(INFO) << "state before eskf update: " << state_bef_update;
-                LOG(INFO) << "state after  eskf update: " << update_state;
+                //
+                spdlog::info("state after  eskf update: {}", update_state);
+                //
+                spdlog::info("last state: {}", last_state);
 
                 auto state_pred = preinteg->Predict(last_state, eskf.GetGravity());
-                LOG(INFO) << "state in pred: " << state_pred;
+                //
+                spdlog::info("state in pred: {}", state_pred);
 
                 Optimize(last_state, update_state, last_gnss, gnss_convert, preinteg, eskf.GetGravity());
             }
@@ -335,7 +350,8 @@ void Optimize(sad::NavStated& last_state, sad::NavStated& this_state, sad::GNSS&
 
     optimizer.addEdge(edge_inertial);
     edge_inertial->computeError();
-    LOG(INFO) << "inertial init err: " << edge_inertial->chi2();
+    //
+    spdlog::info("inertial init err: {}", edge_inertial->chi2());
 
     auto* edge_gyro_rw = new sad::EdgeGyroRW();
     edge_gyro_rw->setVertex(0, v0_bg);
@@ -344,7 +360,8 @@ void Optimize(sad::NavStated& last_state, sad::NavStated& this_state, sad::GNSS&
     optimizer.addEdge(edge_gyro_rw);
 
     edge_gyro_rw->computeError();
-    LOG(INFO) << "inertial bg rw: " << edge_gyro_rw->chi2();
+    //
+    spdlog::info("inertial bg rw: {}", edge_gyro_rw->chi2());
 
     auto* edge_acc_rw = new sad::EdgeAccRW();
     edge_acc_rw->setVertex(0, v0_ba);
@@ -353,7 +370,8 @@ void Optimize(sad::NavStated& last_state, sad::NavStated& this_state, sad::GNSS&
     optimizer.addEdge(edge_acc_rw);
 
     edge_acc_rw->computeError();
-    LOG(INFO) << "inertial ba rw: " << edge_acc_rw->chi2();
+    //
+    spdlog::info("inertial ba rw: {}", edge_acc_rw->chi2());
 
     // GNSS边
     auto edge_gnss0 = new sad::EdgeGNSS(v0_pose, last_gnss.utm_pose_);
@@ -361,14 +379,16 @@ void Optimize(sad::NavStated& last_state, sad::NavStated& this_state, sad::GNSS&
     optimizer.addEdge(edge_gnss0);
 
     edge_gnss0->computeError();
-    LOG(INFO) << "gnss0 init err: " << edge_gnss0->chi2();
+    //
+    spdlog::info("gnss0 init err: {}", edge_gnss0->chi2());
 
     auto edge_gnss1 = new sad::EdgeGNSS(v1_pose, this_gnss.utm_pose_);
     edge_gnss1->setInformation(Mat6d::Identity() * 1e2);
     optimizer.addEdge(edge_gnss1);
 
     edge_gnss1->computeError();
-    LOG(INFO) << "gnss1 init err: " << edge_gnss1->chi2();
+    //
+    spdlog::info("gnss1 init err: {}", edge_gnss1->chi2());
 
     optimizer.setVerbose(true);
     optimizer.initializeOptimization();
@@ -376,21 +396,22 @@ void Optimize(sad::NavStated& last_state, sad::NavStated& this_state, sad::GNSS&
 
     sad::NavStated corr_state(this_state.timestamp_, v1_pose->estimate().so3(), v1_pose->estimate().translation(),
                               v1_vel->estimate(), v1_bg->estimate(), v1_ba->estimate());
-    LOG(INFO) << "corr state in opt: " << corr_state;
+    //
+    spdlog::info("corr state in opt: {}", corr_state);
 
     // 获取结果，统计各类误差
-    LOG(INFO) << "chi2/error: ";
-    LOG(INFO) << "preintegration: " << edge_inertial->chi2() << "/" << edge_inertial->error().transpose();
-    LOG(INFO) << "gnss0: " << edge_gnss0->chi2() << ", " << edge_gnss0->error().transpose();
-    LOG(INFO) << "gnss1: " << edge_gnss1->chi2() << ", " << edge_gnss1->error().transpose();
-    LOG(INFO) << "bias: " << edge_gyro_rw->chi2() << "/" << edge_acc_rw->error().transpose();
+    spdlog::info("chi2/error: ");
+    //
+    //
+    //
+    //
+    spdlog::info("preintegration: {}/{}", edge_inertial->chi2(), edge_inertial->error().transpose());
+    spdlog::info("gnss0: {}, {}", edge_gnss0->chi2(), edge_gnss0->error().transpose());
+    spdlog::info("gnss1: {}, {}", edge_gnss1->chi2(), edge_gnss1->error().transpose());
+    spdlog::info("bias: {}/{}", edge_gyro_rw->chi2(), edge_acc_rw->error().transpose());
 }
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
-
     testing::InitGoogleTest(&argc, argv);
     google::ParseCommandLineFlags(&argc, &argv, true);
     return RUN_ALL_TESTS();

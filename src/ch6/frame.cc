@@ -4,8 +4,8 @@
 
 #include "frame.h"
 
-#include <glog/logging.h>
 #include <fstream>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -24,7 +24,8 @@ void Frame::Dump(const std::string& filename) {
 void Frame::Load(const std::string& filename) {
     std::ifstream fin(filename);
     if (!fin) {
-        LOG(ERROR) << "cannot load from " << filename;
+        //
+        spdlog::error("cannot load from {}", filename);
         return;
     }
 

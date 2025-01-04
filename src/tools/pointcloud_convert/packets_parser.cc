@@ -1,5 +1,5 @@
 #include "tools/pointcloud_convert/packets_parser.h"
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 
 namespace sad::tools {
 
@@ -77,7 +77,7 @@ void PacketsParser::PaddingPointCloud(const PacketsMsgPtr &scan_msg, FullCloudPt
     size_t packets_size = scan_msg->packets.size();
 
     if (packets_size <= 0) {
-        LOG(ERROR) << "velodyne pointcloud node input packets size is empty";
+        spdlog::error("velodyne pointcloud node input packets size is empty");
         return;
     }
 
@@ -99,7 +99,6 @@ void PacketsParser::PaddingPointCloud(const PacketsMsgPtr &scan_msg, FullCloudPt
     out_pc_msg_ptr->header.frame_id = scan_msg->header.frame_id;
 
     if (out_pc_msg_ptr->empty()) {
-        //        LOG(ERROR) << "All points is NAN!Please check velodyne:" << config_.model;
     }
 }
 

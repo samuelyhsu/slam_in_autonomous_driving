@@ -6,7 +6,7 @@
 #include "ch4/g2o_types.h"
 #include "common/g2o_types.h"
 
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 
 #include <g2o/core/block_solver.h>
 #include <g2o/core/optimization_algorithm_levenberg.h>
@@ -220,16 +220,15 @@ void GinsPreInteg::Optimize() {
 
     if (options_.verbose_) {
         // 获取结果，统计各类误差
-        LOG(INFO) << "chi2/error: ";
-        LOG(INFO) << "preintegration: " << edge_inertial->chi2() << "/" << edge_inertial->error().transpose();
-        // LOG(INFO) << "gnss0: " << edge_gnss0->chi2() << ", " << edge_gnss0->error().transpose();
-        LOG(INFO) << "gnss1: " << edge_gnss1->chi2() << ", " << edge_gnss1->error().transpose();
-        LOG(INFO) << "bias: " << edge_gyro_rw->chi2() << "/" << edge_acc_rw->error().transpose();
-        LOG(INFO) << "prior: " << edge_prior->chi2() << "/" << edge_prior->error().transpose();
+        spdlog::info("chi2/error: ");
+        spdlog::info("preintegration: {}/{}", edge_inertial->chi2(), edge_inertial->error().transpose());
+        spdlog::info("gnss1: {}, {}", edge_gnss1->chi2(), edge_gnss1->error().transpose());
+        spdlog::info("bias: {}/{}", edge_gyro_rw->chi2(), edge_acc_rw->error().transpose());
+        spdlog::info("prior: {}/{}", edge_prior->chi2(), edge_prior->error().transpose());
         if (edge_odom) {
-            LOG(INFO) << "body vel: " << (v1_pose->estimate().so3().inverse() * v1_vel->estimate()).transpose();
-            LOG(INFO) << "meas: " << vel_odom.transpose();
-            LOG(INFO) << "odom: " << edge_odom->chi2() << "/" << edge_odom->error().transpose();
+            spdlog::info("body vel: {}", (v1_pose->estimate().so3().inverse() * v1_vel->estimate()).transpose());
+            spdlog::info("meas: {}", vel_odom.transpose());
+            spdlog::info("odom: {}/{}", edge_odom->chi2(), edge_odom->error().transpose());
         }
     }
 

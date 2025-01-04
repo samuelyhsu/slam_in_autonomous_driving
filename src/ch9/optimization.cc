@@ -10,9 +10,9 @@
 #include <g2o/core/robust_kernel.h>
 #include <g2o/core/sparse_block_matrix.h>
 #include <g2o/solvers/eigen/linear_solver_eigen.h>
-#include <glog/logging.h>
 #include <yaml-cpp/yaml.h>
 #include <boost/format.hpp>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -45,11 +45,11 @@ bool Optimization::Init(int stage) {
     stage_ = stage;
 
     if (!LoadKeyFrames("./data/ch9/keyframes.txt", keyframes_)) {
-        LOG(ERROR) << "cannot load keyframes.txt";
+        spdlog::error("cannot load keyframes.txt");
         return false;
     }
 
-    LOG(INFO) << "keyframes: " << keyframes_.size();
+    spdlog::info("keyframes: {}", keyframes_.size());
 
     // 读参数
     auto yaml = YAML::LoadFile(yaml_);
@@ -63,7 +63,7 @@ bool Optimization::Init(int stage) {
 
     std::vector<double> rtk_ext_t = yaml["rtk_ext"]["t"].as<std::vector<double>>();
     TBG_ = SE3(SO3(), Vec3d(rtk_ext_t[0], rtk_ext_t[1], rtk_ext_t[2]));
-    LOG(INFO) << "TBG = \n" << TBG_.matrix();
+    spdlog::info("TBG = \n{}", TBG_.matrix());
 
     if (stage_ == 2) {
         LoadLoopCandidates();
@@ -72,7 +72,7 @@ bool Optimization::Init(int stage) {
 }
 
 void Optimization::Run() {
-    LOG(INFO) << "running optimization on stage " << stage_;
+    spdlog::info("running optimization on stage {}", stage_);
     if (!rtk_has_rot_ && stage_ == 1) {
         InitialAlign();
     }
@@ -80,9 +80,9 @@ void Optimization::Run() {
     BuildProblem();  // 建立问题
 
     SaveG2O("./data/ch9/before.g2o");
-    LOG(INFO) << "RTK 误差：" << print_info(gnss_edge_, rtk_outlier_th_);
-    LOG(INFO) << "RTK 平移误差：" << print_info(gnss_trans_edge_, rtk_outlier_th_);
-    LOG(INFO) << "lidar 误差：" << print_info(lidar_edge_, 0);
+    spdlog::info("RTK 误差：{}", print_info(gnss_edge_, rtk_outlier_th_));
+    spdlog::info("RTK 平移误差：{}", print_info(gnss_trans_edge_, rtk_outlier_th_));
+    spdlog::info("lidar 误差：{}", print_info(lidar_edge_, 0));
 
     Solve();           // 带着RK求解一遍
     RemoveOutliers();  // 移除异常值
@@ -91,7 +91,7 @@ void Optimization::Run() {
     SaveG2O("./data/ch9/after.g2o");
 
     SaveResults();  // 保存结果
-    LOG(INFO) << "done";
+    spdlog::info("done");
 }
 
 void Optimization::SaveG2O(const std::string& file_name) {
@@ -140,7 +140,7 @@ void Optimization::AddVertices() {
         optimizer_.addVertex(v);
         vertices_.emplace(kf->id_, v);
     }
-    LOG(INFO) << "vertex: " << vertices_.size();
+    spdlog::info("vertex: {}", vertices_.size());
 }
 
 void Optimization::AddRTKEdges() {
@@ -152,7 +152,7 @@ void Optimization::AddRTKEdges() {
     info_all.block<3, 3>(0, 0) = info_ang;
     info_all.block<3, 3>(3, 3) = info_pos;
 
-    LOG(INFO) << "Info of rtk trans: " << info_pos.diagonal().transpose();
+    spdlog::info("Info of rtk trans: {}", info_pos.diagonal().transpose());
 
     if (stage_ == 2) {
         info_pos *= 0.01;
@@ -184,7 +184,7 @@ void Optimization::AddRTKEdges() {
         }
     }
 
-    LOG(INFO) << "gnss edges: " << gnss_edge_.size() << ", " << gnss_trans_edge_.size();
+    spdlog::info("gnss edges: {}, {}", gnss_edge_.size(), gnss_trans_edge_.size());
 }
 
 void Optimization::AddLidarEdges() {
@@ -213,7 +213,7 @@ void Optimization::AddLidarEdges() {
         }
     }
 
-    LOG(INFO) << "lidar edges: " << lidar_edge_.size();
+    spdlog::info("lidar edges: {}", lidar_edge_.size());
 }
 
 void Optimization::AddLoopEdges() {
@@ -246,10 +246,10 @@ void Optimization::Solve() {
     optimizer_.initializeOptimization(0);
     optimizer_.optimize(100);
 
-    LOG(INFO) << "RTK 误差：" << print_info(gnss_edge_, rtk_outlier_th_);
-    LOG(INFO) << "RTK 平移误差：" << print_info(gnss_trans_edge_, rtk_outlier_th_);
-    LOG(INFO) << "lidar 误差：" << print_info(lidar_edge_, 0);
-    LOG(INFO) << "loop 误差：" << print_info(loop_edge_, 0);
+    spdlog::info("RTK 误差：{}", print_info(gnss_edge_, rtk_outlier_th_));
+    spdlog::info("RTK 平移误差：{}", print_info(gnss_trans_edge_, rtk_outlier_th_));
+    spdlog::info("lidar 误差：{}", print_info(lidar_edge_, 0));
+    spdlog::info("loop 误差：{}", print_info(loop_edge_, 0));
 }
 
 void Optimization::RemoveOutliers() {
@@ -266,11 +266,11 @@ void Optimization::RemoveOutliers() {
 
     std::for_each(gnss_edge_.begin(), gnss_edge_.end(), remove_outlier);
     std::for_each(gnss_trans_edge_.begin(), gnss_trans_edge_.end(), remove_outlier);
-    LOG(INFO) << "gnss outlier: " << cnt_outlier_removed << "/" << gnss_edge_.size() + gnss_trans_edge_.size();
+    spdlog::info("gnss outlier: {}/{}", cnt_outlier_removed, gnss_edge_.size() + gnss_trans_edge_.size());
 
     cnt_outlier_removed = 0;
     std::for_each(loop_edge_.begin(), loop_edge_.end(), remove_outlier);
-    LOG(INFO) << "loop outlier: " << cnt_outlier_removed << "/" << loop_edge_.size();
+    spdlog::info("loop outlier: {}/{}", cnt_outlier_removed, loop_edge_.size());
 }
 
 void Optimization::SaveResults() {
@@ -293,7 +293,7 @@ void Optimization::SaveResults() {
     }
 
     std::sort(rtk_trans_error.begin(), rtk_trans_error.end());
-    LOG(INFO) << "med error: " << rtk_trans_error[rtk_trans_error.size() / 2];
+    spdlog::info("med error: {}", rtk_trans_error[rtk_trans_error.size() / 2]);
 
     // 写入文件
     system("rm ./data/ch9/keyframes.txt");
@@ -321,7 +321,7 @@ void Optimization::InitialAlign() {
     p1 = p1 / N;
     p2 = p2 / N;
 
-    LOG(INFO) << "p1: " << p1.transpose() << ", p2: " << p2.transpose();
+    spdlog::info("p1: {}, p2: {}", p1.transpose(), p2.transpose());
 
     std::vector<Vec3d> q1(N), q2(N);  // remove the center
     for (int i = 0; i < N; i++) {
@@ -347,7 +347,7 @@ void Optimization::InitialAlign() {
 
     // change lidar pose
     SE3 T(R, t);
-    LOG(INFO) << "initial trans: \n" << T.matrix();
+    spdlog::info("initial trans: \n{}", T.matrix());
     for (auto& kfp : keyframes_) {
         kfp.second->lidar_pose_ = T * kfp.second->lidar_pose_;
     }
@@ -356,7 +356,7 @@ void Optimization::InitialAlign() {
 void Optimization::LoadLoopCandidates() {
     std::ifstream fin("./data/ch9/loops.txt");
     if (!fin) {
-        LOG(WARNING) << "cannot load file: ./data/ch9/loops.txt";
+        spdlog::warn("cannot load file: ./data/ch9/loops.txt");
         return;
     }
 
@@ -384,7 +384,7 @@ void Optimization::LoadLoopCandidates() {
         loop_candidates_.emplace_back(lc);
     }
 
-    LOG(INFO) << "loaded loops: " << loop_candidates_.size();
+    spdlog::info("loaded loops: {}", loop_candidates_.size());
 }
 
 }  // namespace sad

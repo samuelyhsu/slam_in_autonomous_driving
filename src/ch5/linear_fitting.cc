@@ -1,6 +1,7 @@
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <opencv2/opencv.hpp>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
+
 
 #include "common/eigen_types.h"
 #include "common/math_utils.h"
@@ -13,15 +14,12 @@ void PlaneFittingTest();
 void LineFittingTest();
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
-    LOG(INFO) << "testing plane fitting";
+    spdlog::info("testing plane fitting");
     PlaneFittingTest();
 
-    LOG(INFO) << "testing line fitting";
+    spdlog::info("testing line fitting");
     LineFittingTest();
 }
 
@@ -43,15 +41,18 @@ void PlaneFittingTest() {
         points.emplace_back(p);
 
         // 验证在平面上
-        LOG(INFO) << "res of p: " << p.dot(true_plane_coeffs.head<3>()) + true_plane_coeffs[3];
+        //
+        spdlog::info("res of p: {}", p.dot(true_plane_coeffs.head<3>()) + true_plane_coeffs[3]);
     }
 
     Vec4d estimated_plane_coeffs;
     if (sad::math::FitPlane(points, estimated_plane_coeffs)) {
-        LOG(INFO) << "estimated coeffs: " << estimated_plane_coeffs.transpose()
-                  << ", true: " << true_plane_coeffs.transpose();
+        //
+        //              << ", true: " << true_plane_coeffs.transpose();
+        spdlog::info("estimated coeffs: {}, true: {}", estimated_plane_coeffs.transpose(),
+                     true_plane_coeffs.transpose());
     } else {
-        LOG(INFO) << "plane fitting failed";
+        spdlog::info("plane fitting failed");
     }
 }
 
@@ -74,9 +75,11 @@ void LineFittingTest() {
 
     Vec3d esti_origin, esti_dir;
     if (sad::math::FitLine(points, esti_origin, esti_dir)) {
-        LOG(INFO) << "estimated origin: " << esti_origin.transpose() << ", true: " << true_line_origin.transpose();
-        LOG(INFO) << "estimated dir: " << esti_dir.transpose() << ", true: " << true_line_dir.transpose();
+        //
+        //
+        spdlog::info("estimated origin: {}, true: {}", esti_origin.transpose(), true_line_origin.transpose());
+        spdlog::info("estimated dir: {}, true: {}", esti_dir.transpose(), true_line_dir.transpose());
     } else {
-        LOG(INFO) << "line fitting failed";
+        spdlog::info("line fitting failed");
     }
 }

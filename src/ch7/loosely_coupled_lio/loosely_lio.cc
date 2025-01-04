@@ -2,8 +2,8 @@
 #include <execution>
 
 #include "common/lidar_utils.h"
-#include "common/timer/timer.h"
 #include "common/point_cloud_utils.h"
+#include "common/timer/timer.h"
 #include "loosely_lio.h"
 
 namespace sad {
@@ -51,7 +51,7 @@ bool LooselyLIO::LoadFromYAML(const std::string &yaml_file) {
 }
 
 void LooselyLIO::ProcessMeasurements(const MeasureGroup &meas) {
-    LOG(INFO) << "call meas, imu: " << meas.imu_.size() << ", lidar pts: " << meas.lidar_->size();
+    spdlog::info("call meas, imu: {}, lidar pts: {}", meas.imu_.size(), meas.lidar_->size());
     measures_ = meas;
 
     if (imu_need_init_) {
@@ -95,7 +95,7 @@ void LooselyLIO::TryInitIMU() {
         eskf_.SetInitialConditions(options, imu_init_.GetInitBg(), imu_init_.GetInitBa(), imu_init_.GetGravity());
         imu_need_init_ = false;
 
-        LOG(INFO) << "IMU初始化成功";
+        spdlog::info("IMU初始化成功");
     }
 }
 
@@ -183,7 +183,7 @@ void LooselyLIO::Finish() {
 
         ui_->Quit();
     }
-    LOG(INFO) << "finish done";
+    spdlog::info("finish done");
 }
 
 }  // namespace sad

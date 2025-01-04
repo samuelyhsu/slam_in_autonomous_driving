@@ -6,7 +6,7 @@
 #include "common/math_utils.h"
 #include "utm_convert/utm.h"
 
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 

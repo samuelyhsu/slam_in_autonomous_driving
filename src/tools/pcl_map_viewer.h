@@ -5,15 +5,15 @@
 #ifndef SLAM_IN_AUTO_DRIVING_PCL_MAP_VIEWER_H
 #define SLAM_IN_AUTO_DRIVING_PCL_MAP_VIEWER_H
 
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 
 #include <pcl/common/transforms.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include "common/point_types.h"
 #include "common/point_cloud_utils.h"
+#include "common/point_types.h"
 
 namespace sad {
 
@@ -61,7 +61,7 @@ class PCLMapViewer {
         if (local_map_->size() > 600000) {
             leaf_size_ *= 1.26;
             voxel_filter_.setLeafSize(leaf_size_, leaf_size_, leaf_size_);
-            LOG(INFO) << "viewer set leaf size to " << leaf_size_;
+            spdlog::info("viewer set leaf size to {}", leaf_size_);
         }
     }
 
@@ -69,9 +69,9 @@ class PCLMapViewer {
     void SaveMap(std::string path) {
         if (local_map_->size() > 0) {
             sad::SaveCloudToFile(path, *local_map_);
-            LOG(INFO) << "save map to " << path;
+            spdlog::info("save map to {}", path);
         } else {
-            LOG(INFO) << "map 是空的" << path;
+            spdlog::info("map is empty {}", path);
         }
     }
 

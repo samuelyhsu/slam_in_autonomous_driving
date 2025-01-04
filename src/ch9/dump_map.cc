@@ -2,8 +2,8 @@
 // Created by xiang on 22-12-7.
 //
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 DEFINE_double(voxel_size, 0.1, "导出地图分辨率");
 DEFINE_string(pose_source, "lidar", "使用的pose来源:lidar/rtk/opti1/opti2");
@@ -13,8 +13,8 @@ DEFINE_string(dump_to, "./data/ch9/", "导出的目标路径");
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/io/pcd_io.h>
 
-#include "keyframe.h"
 #include "common/point_cloud_utils.h"
+#include "keyframe.h"
 
 /**
  * 将keyframes.txt中的地图和点云合并为一个pcd
@@ -22,24 +22,21 @@ DEFINE_string(dump_to, "./data/ch9/", "导出的目标路径");
 
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, true);
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
 
     using namespace sad;
     std::map<IdType, KFPtr> keyframes;
     if (!LoadKeyFrames("./data/ch9/keyframes.txt", keyframes)) {
-        LOG(ERROR) << "failed to load keyframes.txt";
+        spdlog::error("failed to load keyframes.txt");
         return -1;
     }
 
     if (keyframes.empty()) {
-        LOG(INFO) << "keyframes are empty";
+        spdlog::info("keyframes are empty");
         return 0;
     }
 
     // dump kf cloud and merge
-    LOG(INFO) << "merging";
+    spdlog::info("merging");
     CloudPtr global_cloud(new PointCloudType);
 
     pcl::VoxelGrid<PointType> voxel_grid_filter;
@@ -73,8 +70,9 @@ int main(int argc, char** argv) {
         *global_cloud += *kf_cloud_voxeled;
         kf->cloud_ = nullptr;
 
-        LOG(INFO) << "merging " << cnt << " in " << keyframes.size() << ", pts: " << kf_cloud_voxeled->size()
-                  << " global pts: " << global_cloud->size();
+        //              << " global pts: " << global_cloud->size();
+        spdlog::info("merging {} in {}, pts: {}, global pts: {}", cnt, keyframes.size(), kf_cloud_voxeled->size(),
+                     global_cloud->size());
         cnt++;
     }
 
@@ -82,6 +80,6 @@ int main(int argc, char** argv) {
         sad::SaveCloudToFile(FLAGS_dump_to + "/map.pcd", *global_cloud);
     }
 
-    LOG(INFO) << "done.";
+    spdlog::info("done.");
     return 0;
 }

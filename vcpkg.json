@@ -1,0 +1,10 @@
+{
+  "dependencies": [
+    "spdlog",
+    "gtest",
+    "eigen3",
+    "suitesparse",
+    "pangolin",
+    "yaml-cpp"
+  ]
+}

@@ -1,23 +1,131 @@
 cmake_minimum_required(VERSION 3.5)
+
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+endif()
+
+list(APPEND CMAKE_PREFIX_PATH "/opt/ros/noetic")
+
+message(STATUS "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
+
 project(slam_in_auto_driving)
 
-set(CMAKE_BUILD_TYPE "Release")
+
+
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-w")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -g -ggdb ${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS_DEBUG "-g ${CMAKE_CXX_FLAGS}")
+
 
 add_definitions("-DCATKIN_ENABLE_TESTING=0")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+add_subdirectory(thirdparty/livox_ros_driver)
 
-option(BUILD_WITH_UBUNTU1804 OFF)
+function(print_package_info package_name)
+  message(STATUS "${package_name}: version=${${package_name}_VERSION}, dir=${${package_name}_DIR}")
+endfunction()
 
-include(cmake/packages.cmake)
+find_package(spdlog CONFIG REQUIRED)
+print_package_info(spdlog)
+
+find_package(GTest CONFIG REQUIRED)
+print_package_info(GTest)
+
+# find_package(Glog  REQUIRED)
+# print_package_info(Glog)
+
+# set(GFLAGS_USE_TARGET_NAMESPACE ON)
+find_package(gflags CONFIG REQUIRED)
+print_package_info(gflags)
+
+
+
+find_package(TBB CONFIG REQUIRED)
+print_package_info(TBB)
+
+find_package(Eigen3 CONFIG REQUIRED)
+print_package_info(Eigen3)
+
+# find_package(Sophus REQUIRED)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/sophus)
+
+
+find_package(suitesparse CONFIG REQUIRED)
+print_package_info(suitesparse)
+
+
+# find_package(g2o REQUIRED)
+# g2o 使用thirdparty中的
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/g2o/)
+set(g2o_libs
+        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_stuff.so
+        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_core.so
+	# ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_solver_cholmod.so
+        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_solver_dense.so
+        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_solver_csparse.so
+        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_csparse_extension.so
+        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_types_sba.so
+        ${CSPARSE_LIBRARY}
+        ${CHOLMOD_LIBRARY}
+        )
+
+
+find_package(Pangolin CONFIG REQUIRED)
+print_package_info(Pangolin)
+
+
+find_package(yaml-cpp CONFIG REQUIRED)
+print_package_info(yaml-cpp)
+
+
+find_package(PCL CONFIG REQUIRED)
+print_package_info(PCL)
+# include_directories(${PCL_INCLUDE_DIRS})
+        
+find_package(OpenCV CONFIG REQUIRED)
+print_package_info(OpenCV)
+# include_directories(${OpenCV_INCLUDE_DIRS})
+
+include_directories(${CMAKE_BINARY_DIR}/devel/include)
+
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  rospy
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+  message_generation
+  pcl_ros
+  pcl_conversions
+)
+include_directories(${catkin_INCLUDE_DIRS})
+
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/)
+include_directories(${PROJECT_SOURCE_DIR}/thirdparty/velodyne/include)
+
+set(third_party_libs
+# from vcpkg
+        pthread
+        spdlog::spdlog
+        gflags
+        Eigen3::Eigen
+        ${g2o_libs}
+        # g2o::core g2o::stuff g2o::types_sba g2o::csparse_extension
+        # Sophus::Sophus
+        ${Pangolin_LIBRARIES}
+        TBB::tbb
+        SuiteSparse::cholmod SuiteSparse::cxsparse
+        yaml-cpp::yaml-cpp
+        ${OpenCV_LIBS}
+        ${PCL_LIBRARIES}
+# others
+        ${catkin_LIBRARIES}
+        # roscpp rosbag
+        )
+message(STATUS "third_party_libs=${third_party_libs}")
+
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR})
-include_directories(${PROJECT_SOURCE_DIR}/build/devel/include)
 
 add_subdirectory(src)

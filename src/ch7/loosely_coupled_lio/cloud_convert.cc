@@ -1,8 +1,8 @@
 #include "cloud_convert.h"
 
-#include <glog/logging.h>
 #include <yaml-cpp/yaml.h>
 #include <execution>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -22,7 +22,7 @@ void CloudConvert::Process(const sensor_msgs::PointCloud2::ConstPtr &msg, FullCl
             break;
 
         default:
-            LOG(ERROR) << "Error LiDAR Type: " << int(lidar_type_);
+            spdlog::error("Error LiDAR Type: {}", int(lidar_type_));
             break;
     }
     *pcl_out = cloud_out_;
@@ -182,15 +182,15 @@ void CloudConvert::LoadFromYAML(const std::string &yaml_file) {
 
     if (lidar_type == 1) {
         lidar_type_ = LidarType::AVIA;
-        LOG(INFO) << "Using AVIA Lidar";
+        spdlog::info("Using AVIA Lidar");
     } else if (lidar_type == 2) {
         lidar_type_ = LidarType::VELO32;
-        LOG(INFO) << "Using Velodyne 32 Lidar";
+        spdlog::info("Using Velodyne 32 Lidar");
     } else if (lidar_type == 3) {
         lidar_type_ = LidarType::OUST64;
-        LOG(INFO) << "Using OUST 64 Lidar";
+        spdlog::info("Using OUST 64 Lidar");
     } else {
-        LOG(WARNING) << "unknown lidar_type";
+        spdlog::warn("unknown lidar_type");
     }
 }
 

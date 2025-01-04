@@ -1,5 +1,3 @@
-# Copyright(c) 2019 livoxtech limited.
-cmake_minimum_required(VERSION 3.0)
 
 # we only need livox message definition here
 project(livox_ros_driver)
@@ -19,7 +17,3 @@ add_message_files(FILES
 generate_messages(DEPENDENCIES
         std_msgs
         )
-
-if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose Release or Debug" FORCE)
-endif ()

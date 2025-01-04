@@ -12,8 +12,8 @@
 #include "common/nav_state.h"
 #include "common/odom.h"
 
-#include <glog/logging.h>
 #include <iomanip>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -222,7 +222,7 @@ bool ESKF<S>::Predict(const IMU& imu) {
     double dt = imu.timestamp_ - current_time_;
     if (dt > (5 * options_.imu_dt_) || dt < 0) {
         // 时间间隔不对，可能是第一个IMU数据，没有历史信息
-        LOG(INFO) << "skip this imu because dt_ = " << dt;
+        spdlog::info("skip this imu because dt_ = {}", dt);
         current_time_ = imu.timestamp_;
         return false;
     }

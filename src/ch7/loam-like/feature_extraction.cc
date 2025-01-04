@@ -2,7 +2,7 @@
 // Created by xiang on 2022/7/21.
 //
 #include "ch7/loam-like/feature_extraction.h"
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 

@@ -9,8 +9,8 @@
 #include <g2o/core/base_unary_edge.h>
 #include <g2o/core/base_vertex.h>
 
-#include <glog/logging.h>
 #include <opencv2/core.hpp>
+#include "spdlog/spdlog.h"
 
 #include "common/eigen_types.h"
 #include "common/math_utils.h"

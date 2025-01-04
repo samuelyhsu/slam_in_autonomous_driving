@@ -6,10 +6,8 @@ set(PCL_DIR /usr/lib/aarch64-linux-gnu/cmake/pcl)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O0 -g -fopenmp")
 find_package(catkin REQUIRED
    COMPONENTS
-   roscpp
-   pcl_ros
-   pcl_conversions
-   sensor_msgs
+  #  pcl_ros
+  #  pcl_conversions
    velodyne_msgs
    common_msgs
 )

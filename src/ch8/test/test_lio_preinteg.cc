@@ -2,8 +2,8 @@
 // Created by xiang on 22-11-10.
 //
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include "ch8/lio-preinteg/lio_preinteg.h"
 #include "common/io_utils.h"
@@ -16,9 +16,6 @@ DEFINE_string(config, "./config/velodyne_nclt.yaml", "path of config yaml");  //
 DEFINE_bool(display_map, true, "display map?");
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     sad::RosbagIO rosbag_io(fLS::FLAGS_bag_path, sad::Str2DatasetType(FLAGS_dataset_type));
@@ -43,7 +40,7 @@ int main(int argc, char** argv) {
 
     lio.Finish();
     sad::common::Timer::PrintAll();
-    LOG(INFO) << "done.";
+    spdlog::info("done.");
 
     return 0;
 }

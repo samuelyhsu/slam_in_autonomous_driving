@@ -6,9 +6,9 @@
 #include "ch6/g2o_types.h"
 #include "lidar_2d_utils.h"
 
-#include <glog/logging.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui.hpp>
+#include "spdlog/spdlog.h"
 
 #include <g2o/core/base_unary_edge.h>
 #include <g2o/core/block_solver.h>
@@ -73,8 +73,8 @@ bool LoopClosing::DetectLoopCandidates() {
         double dis = (center - frame_pos).norm();
         if (dis < candidate_distance_th_) {
             /// 如果这个frame离submap中心差距小于阈值，则检查
-            LOG(INFO) << "taking " << current_frame_->keyframe_id_ << " with " << sp.first
-                      << ", last submap id: " << last_submap_id_;
+            spdlog::info("taking {} with {}, last submap id: {}", current_frame_->keyframe_id_, sp.first,
+                         last_submap_id_);
             current_candidates_.emplace_back(sp.first);
         }
     }
@@ -100,7 +100,6 @@ void LoopClosing::MatchInHistorySubmaps() {
                 pose_in_target_submap * current_frame_->pose_.inverse() * submaps_[last_submap_id_]->GetPose();
             loop_constraints_.emplace(std::pair<size_t, size_t>(can, last_submap_id_),
                                       LoopConstraints(can, last_submap_id_, T_this_cur));
-            LOG(INFO) << "adding loop from submap " << can << " to " << last_submap_id_;
 
             /// 可视化显示
             auto occu_image = submap->GetOccuMap().GetOccupancyGridBlackWhite();
@@ -185,15 +184,13 @@ void LoopClosing::Optimize() {
     int inliers = 0;
     for (auto& ep : loop_edges) {
         if (ep.second->chi2() < loop_rk_delta_) {
-            LOG(INFO) << "loop from " << ep.first.first << " to " << ep.first.second
-                      << " is correct, chi2: " << ep.second->chi2();
+            spdlog::info("loop from {} to {} is correct, chi2: {}", ep.first.first, ep.first.second, ep.second->chi2());
             ep.second->setRobustKernel(nullptr);
             loop_constraints_.at(ep.first).valid_ = true;
             inliers++;
         } else {
             ep.second->setLevel(1);
-            LOG(INFO) << "loop from " << ep.first.first << " to " << ep.first.second
-                      << " is invalid, chi2: " << ep.second->chi2();
+            spdlog::info("loop from {} to {} is invalid, chi2: {}", ep.first.first, ep.first.second, ep.second->chi2());
             loop_constraints_.at(ep.first).valid_ = false;
         }
     }
@@ -207,8 +204,6 @@ void LoopClosing::Optimize() {
         // 更新所属的frame world pose
         sp.second->UpdateFramePoseWorld();
     }
-
-    LOG(INFO) << "loop inliers: " << inliers << "/" << loop_constraints_.size();
 
     // 移除错误的匹配
     for (auto iter = loop_constraints_.begin(); iter != loop_constraints_.end();) {

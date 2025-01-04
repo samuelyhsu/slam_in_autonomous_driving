@@ -5,7 +5,7 @@
 #include "ch3/static_imu_init.h"
 #include "common/math_utils.h"
 
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -15,7 +15,7 @@ bool StaticIMUInit::AddIMU(const IMU& imu) {
     }
 
     if (options_.use_speed_for_static_checking_ && !is_static_) {
-        LOG(WARNING) << "等待车辆静止";
+        spdlog::warn("等待车辆静止");
         init_imu_deque_.clear();
         return false;
     }
@@ -70,7 +70,7 @@ bool StaticIMUInit::TryInit() {
     math::ComputeMeanAndCovDiag(init_imu_deque_, mean_acce, cov_acce_, [this](const IMU& imu) { return imu.acce_; });
 
     // 以acce均值为方向，取9.8长度为重力
-    LOG(INFO) << "mean acce: " << mean_acce.transpose();
+    spdlog::info("mean acce: {}", mean_acce.transpose());
     gravity_ = -mean_acce / mean_acce.norm() * options_.gravity_norm_;
 
     // 重新计算加计的协方差
@@ -79,12 +79,12 @@ bool StaticIMUInit::TryInit() {
 
     // 检查IMU噪声
     if (cov_gyro_.norm() > options_.max_static_gyro_var) {
-        LOG(ERROR) << "陀螺仪测量噪声太大" << cov_gyro_.norm() << " > " << options_.max_static_gyro_var;
+        spdlog::error("陀螺仪测量噪声太大 {} > {}", cov_gyro_.norm(), options_.max_static_gyro_var);
         return false;
     }
 
     if (cov_acce_.norm() > options_.max_static_acce_var) {
-        LOG(ERROR) << "加计测量噪声太大" << cov_acce_.norm() << " > " << options_.max_static_acce_var;
+        spdlog::error("加计测量噪声太大 {} > {}", cov_acce_.norm(), options_.max_static_acce_var);
         return false;
     }
 
@@ -92,11 +92,11 @@ bool StaticIMUInit::TryInit() {
     init_bg_ = mean_gyro;
     init_ba_ = mean_acce;
 
-    LOG(INFO) << "IMU 初始化成功，初始化时间= " << current_time_ - init_start_time_ << ", bg = " << init_bg_.transpose()
-              << ", ba = " << init_ba_.transpose() << ", gyro sq = " << cov_gyro_.transpose()
-              << ", acce sq = " << cov_acce_.transpose() << ", grav = " << gravity_.transpose()
-              << ", norm: " << gravity_.norm();
-    LOG(INFO) << "mean gyro: " << mean_gyro.transpose() << " acce: " << mean_acce.transpose();
+    spdlog::info(
+        "IMU 初始化成功，初始化时间= {} , bg = {} , ba = {} , gyro sq = {} , acce sq = {} , grav = {} , norm: {}",
+        current_time_ - init_start_time_, init_bg_.transpose(), init_ba_.transpose(), cov_gyro_.transpose(),
+        cov_acce_.transpose(), gravity_.transpose(), gravity_.norm());
+    spdlog::info("mean gyro: {} acce: {}", mean_gyro.transpose(), mean_acce.transpose());
     init_success_ = true;
     return true;
 }

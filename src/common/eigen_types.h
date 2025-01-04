@@ -10,8 +10,12 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 
+#include "fmt/ostream.h"
 #include "sophus/se2.hpp"
 #include "sophus/se3.hpp"
+
+template <typename T>
+struct fmt::formatter<T, std::enable_if_t<std::is_base_of_v<Eigen::DenseBase<T>, T>, char>> : ostream_formatter {};
 
 using Vec2i = Eigen::Vector2i;
 using Vec3i = Eigen::Vector3i;

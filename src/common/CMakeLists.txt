@@ -7,11 +7,11 @@ add_library(${PROJECT_NAME}.common
         g2o_types.cc
         point_cloud_utils.cc
         )
-
-target_link_libraries(${PROJECT_NAME}.common
+target_include_directories(${PROJECT_NAME}.common PUBLIC
+        include
+        )
+target_link_libraries(${PROJECT_NAME}.common PUBLIC
         ${PROJECT_NAME}.tools
-        ${catkin_LIBRARIES}
-        ${PCL_LIBRARIES}
         )
 
 

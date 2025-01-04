@@ -1,8 +1,8 @@
 //
 // Created by xiang on 22-8-15.
 //
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include "ch7/loosely_coupled_lio/loosely_lio.h"
 #include "common/io_utils.h"
@@ -15,9 +15,6 @@ DEFINE_string(config, "./config/velodyne_ulhk.yaml", "path of config yaml");  //
 DEFINE_bool(display_map, true, "display map?");
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     sad::RosbagIO rosbag_io(fLS::FLAGS_bag_path, sad::Str2DatasetType(FLAGS_dataset_type));
@@ -44,7 +41,7 @@ int main(int argc, char** argv) {
 
     lm.Finish();
     sad::common::Timer::PrintAll();
-    LOG(INFO) << "done.";
+    spdlog::info("done.");
 
     return 0;
 }

@@ -6,8 +6,8 @@
 #include "common/eigen_types.h"
 #include "common/math_utils.h"
 
-#include <glog/logging.h>
 #include <execution>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -75,7 +75,7 @@ double OccupancyMap::FindRangeInAngle(double angle, Scan2d::Ptr scan) {
 
 void OccupancyMap::AddLidarFrame(std::shared_ptr<Frame> frame, GridMethod method) {
     auto& scan = frame->scan_;
-    
+
     // 此处不能直接使用frame->pose_submap_，因为frame可能来自上一个地图
     // 此时frame->pose_submap_还未更新，依旧是frame在上一个地图中的pose
     SE2 pose_in_submap = pose_.inverse() * frame->pose_;

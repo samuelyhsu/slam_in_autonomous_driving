@@ -28,7 +28,7 @@ LioIEKF::LioIEKF(Options options) : options_(options) {
 
 bool LioIEKF::Init(const std::string &config_yaml) {
     if (!LoadFromYAML(config_yaml)) {
-        LOG(INFO) << "init failed.";
+        spdlog::info("init failed.");
         return false;
     }
 
@@ -41,7 +41,7 @@ bool LioIEKF::Init(const std::string &config_yaml) {
 }
 
 void LioIEKF::ProcessMeasurements(const MeasureGroup &meas) {
-    LOG(INFO) << "call meas, imu: " << meas.imu_.size() << ", lidar pts: " << meas.lidar_->size();
+    spdlog::info("call meas, imu: {}, lidar pts: {}", meas.imu_.size(), meas.lidar_->size());
     measures_ = meas;
 
     if (imu_need_init_) {
@@ -100,7 +100,7 @@ void LioIEKF::Align() {
     }
 
     // 后续的scan，使用NDT配合pose进行更新
-    LOG(INFO) << "=== frame " << frame_num_;
+    spdlog::info("=== frame {}", frame_num_);
 
     ndt_.SetSource(current_scan_filter);
     ieskf_.UpdateUsingCustomObserve([this](const SE3 &input_pose, Mat18d &HTVH, Vec18d &HTVr) {
@@ -145,7 +145,7 @@ void LioIEKF::TryInitIMU() {
         ieskf_.SetInitialConditions(options, imu_init_.GetInitBg(), imu_init_.GetInitBa(), imu_init_.GetGravity());
         imu_need_init_ = false;
 
-        LOG(INFO) << "IMU初始化成功";
+        spdlog::info("IMU初始化成功");
     }
 }
 
@@ -203,7 +203,7 @@ void LioIEKF::Finish() {
     if (ui_) {
         ui_->Quit();
     }
-    LOG(INFO) << "finish done";
+    spdlog::info("finish done");
 }
 
 }  // namespace sad

@@ -23,17 +23,17 @@ LoamLikeOdom::LoamLikeOdom(LoamLikeOdom::Options options)
 }
 
 void LoamLikeOdom::ProcessPointCloud(FullCloudPtr cloud) {
-    LOG(INFO) << "processing frame " << cnt_frame_++;
+    spdlog::info("processing frame {}", cnt_frame_++);
     // step 1. 提特征
     CloudPtr current_edge(new PointCloudType), current_surf(new PointCloudType);
     feature_extraction_->Extract(cloud, current_edge, current_surf);
 
     if (current_edge->size() < options_.min_edge_pts_ || current_surf->size() < options_.min_surf_pts_) {
-        LOG(ERROR) << "not enough edge/surf pts: " << current_edge->size() << "," << current_surf->size();
+        spdlog::error("not enough edge/surf pts: {}, {}", current_edge->size(), current_surf->size());
         return;
     }
 
-    LOG(INFO) << "edge: " << current_edge->size() << ", surf: " << current_surf->size();
+    spdlog::info("edge: {}, surf: {}", current_edge->size(), current_surf->size());
 
     if (local_map_edge_ == nullptr || local_map_surf_ == nullptr) {
         // 首帧特殊处理
@@ -58,7 +58,7 @@ void LoamLikeOdom::ProcessPointCloud(FullCloudPtr cloud) {
     pcl::transformPointCloud(*current_surf, *surf_world, pose.matrix());
 
     if (IsKeyframe(pose)) {
-        LOG(INFO) << "inserting keyframe";
+        spdlog::info("inserting keyframe");
         last_kf_pose_ = pose;
         last_kf_id_ = cnt_frame_;
 
@@ -86,17 +86,17 @@ void LoamLikeOdom::ProcessPointCloud(FullCloudPtr cloud) {
         local_map_surf_ = VoxelCloud(local_map_surf_, 1.0);
         local_map_edge_ = VoxelCloud(local_map_edge_, 1.0);
 
-        LOG(INFO) << "insert keyframe, surf pts: " << local_map_surf_->size()
-                  << ", edge pts: " << local_map_edge_->size();
-
+        //              << ", edge pts: " << local_map_edge_->size();
+        spdlog::info("insert keyframe, surf pts: {}, edge pts: {}", local_map_surf_->size(), local_map_edge_->size());
         kdtree_surf_.BuildTree(local_map_surf_);
         kdtree_edge_.BuildTree(local_map_edge_);
 
         *global_map_ += *scan_world;
     }
 
-    LOG(INFO) << "current pose: " << pose.translation().transpose() << ", "
-              << pose.so3().unit_quaternion().coeffs().transpose();
+    //              << pose.so3().unit_quaternion().coeffs().transpose();
+    spdlog::info("current pose: {}, {}", pose.translation().transpose(),
+                 pose.so3().unit_quaternion().coeffs().transpose());
 
     if (viewer_ != nullptr) {
         viewer_->SetPoseAndCloud(pose, scan_world);
@@ -254,7 +254,7 @@ SE3 LoamLikeOdom::AlignWithLocalMap(CloudPtr edge, CloudPtr surf) {
         }
 
         if (effective_num < options_.min_effective_pts_) {
-            LOG(WARNING) << "effective num too small: " << effective_num;
+            spdlog::warn("effective num too small: {}", effective_num);
             return pose;
         }
 
@@ -263,11 +263,12 @@ SE3 LoamLikeOdom::AlignWithLocalMap(CloudPtr edge, CloudPtr surf) {
         pose.translation() += dx.tail<3>();
 
         // 更新
-        LOG(INFO) << "iter " << iter << " total res: " << total_res << ", eff: " << effective_num
-                  << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm();
+        //              << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm();
+        spdlog::info("iter {}, total res: {}, eff: {}, mean res: {}, dxn: {}", iter, total_res, effective_num,
+                     total_res / effective_num, dx.norm());
 
         if (dx.norm() < options_.eps_) {
-            LOG(INFO) << "converged, dx = " << dx.transpose();
+            spdlog::info("converged, dx = {}", dx.transpose());
             break;
         }
     }

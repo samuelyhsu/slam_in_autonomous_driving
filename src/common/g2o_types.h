@@ -5,19 +5,15 @@
 #ifndef SLAM_IN_AUTO_DRIVING_COMMON_G2O_TYPES_H
 #define SLAM_IN_AUTO_DRIVING_COMMON_G2O_TYPES_H
 
-#include <g2o/core/base_binary_edge.h>
-#include <g2o/core/base_multi_edge.h>
-#include <g2o/core/base_unary_edge.h>
-#include <g2o/core/base_vertex.h>
-#include <g2o/core/robust_kernel.h>
-
 #include "common/gnss.h"
 #include "common/nav_state.h"
 
 #include "ch4/imu_preintegration.h"
 #include "g2o/core/robust_kernel_impl.h"
 
-#include <glog/logging.h>
+#include "so3_jacobi.hpp"
+#include "spdlog/spdlog.h"
+
 
 namespace sad {
 /**
@@ -34,6 +30,7 @@ class VertexPose : public g2o::BaseVertex<6, SE3> {
             is >> data[i];
         }
         setEstimate(SE3(Quatd(data[6], data[3], data[4], data[5]), Vec3d(data[0], data[1], data[2])));
+        return true;
     }
 
     bool write(std::ostream& os) const override {
@@ -248,8 +245,8 @@ class EdgeGNSSTransOnly : public g2o::BaseUnaryEdge<3, Vec3d, VertexPose> {
     //     VertexPose* v = (VertexPose*)_vertices[0];
     //     // jacobian 6x6
     //     _jacobianOplusXi.setZero();
-    //     _jacobianOplusXi.block<3, 3>(0, 0) = (_measurement.so3().inverse() * v->estimate().so3()).jr_inv();  // dR/dR
-    //     _jacobianOplusXi.block<3, 3>(3, 3) = Mat3d::Identity();                                              // dp/dp
+    //     _jacobianOplusXi.block<3, 3>(0, 0) = (_measurement.so3().inverse() * v->estimate().so3()).jr_inv();  //
+    //     dR/dR _jacobianOplusXi.block<3, 3>(3, 3) = Mat3d::Identity(); // dp/dp
     // }
 
     virtual bool read(std::istream& in) { return true; }

@@ -1,9 +1,10 @@
 //
 // Created by xiang on 2021/8/19.
 //
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <gtest/gtest.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
+
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/search/kdtree.h>
@@ -26,7 +27,7 @@ TEST(CH5_TEST, BFNN) {
     pcl::io::loadPCDFile(FLAGS_second_scan_path, *second);
 
     if (first->empty() || second->empty()) {
-        LOG(ERROR) << "cannot load cloud";
+        spdlog::error("cannot load cloud");
         FAIL();
     }
 
@@ -34,7 +35,7 @@ TEST(CH5_TEST, BFNN) {
     sad::VoxelGrid(first);
     sad::VoxelGrid(second);
 
-    LOG(INFO) << "points: " << first->size() << ", " << second->size();
+    //
 
     // 评价单线程和多线程版本的暴力匹配
     sad::evaluate_and_call(
@@ -63,7 +64,8 @@ void EvaluateMatches(const std::vector<std::pair<size_t, size_t>>& truth,
     int fp = 0;  // false-positive，esti存在但truth中不存在
     int fn = 0;  // false-negative, truth存在但esti不存在
 
-    LOG(INFO) << "truth: " << truth.size() << ", esti: " << esti.size();
+    //
+    spdlog::info("truth: {}, esti: {}", truth.size(), esti.size());
 
     /// 检查某个匹配在另一个容器中存不存在
     auto exist = [](const std::pair<size_t, size_t>& data, const std::vector<std::pair<size_t, size_t>>& vec) -> bool {
@@ -89,7 +91,8 @@ void EvaluateMatches(const std::vector<std::pair<size_t, size_t>>& truth,
 
     float precision = 1.0 - float(fp) / effective_esti;
     float recall = 1.0 - float(fn) / truth.size();
-    LOG(INFO) << "precision: " << precision << ", recall: " << recall << ", fp: " << fp << ", fn: " << fn;
+    //
+    spdlog::info("precision: {}, recall: {}, fp: {}, fn: {}", precision, recall, fp, fn);
 }
 
 TEST(CH5_TEST, GRID_NN) {
@@ -98,7 +101,7 @@ TEST(CH5_TEST, GRID_NN) {
     pcl::io::loadPCDFile(FLAGS_second_scan_path, *second);
 
     if (first->empty() || second->empty()) {
-        LOG(ERROR) << "cannot load cloud";
+        spdlog::error("cannot load cloud");
         FAIL();
     }
 
@@ -106,7 +109,8 @@ TEST(CH5_TEST, GRID_NN) {
     sad::VoxelGrid(first);
     sad::VoxelGrid(second);
 
-    LOG(INFO) << "points: " << first->size() << ", " << second->size();
+    //
+    spdlog::info("points: {}, {}", first->size(), second->size());
 
     std::vector<std::pair<size_t, size_t>> truth_matches;
     sad::bfnn_cloud(first, second, truth_matches);
@@ -123,50 +127,50 @@ TEST(CH5_TEST, GRID_NN) {
 
     // 评价各种版本的Grid NN
     // sorry没有C17的template lambda... 下面必须写的啰嗦一些
-    LOG(INFO) << "===================";
+    spdlog::info("===================");
     std::vector<std::pair<size_t, size_t>> matches;
     sad::evaluate_and_call(
         [&first, &second, &grid0, &matches]() { grid0.GetClosestPointForCloud(first, second, matches); },
         "Grid0 单线程", 10);
     EvaluateMatches(truth_matches, matches);
 
-    LOG(INFO) << "===================";
+    spdlog::info("===================");
     sad::evaluate_and_call(
         [&first, &second, &grid0, &matches]() { grid0.GetClosestPointForCloudMT(first, second, matches); },
         "Grid0 多线程", 10);
     EvaluateMatches(truth_matches, matches);
 
-    LOG(INFO) << "===================";
+    spdlog::info("===================");
     sad::evaluate_and_call(
         [&first, &second, &grid4, &matches]() { grid4.GetClosestPointForCloud(first, second, matches); },
         "Grid4 单线程", 10);
     EvaluateMatches(truth_matches, matches);
 
-    LOG(INFO) << "===================";
+    spdlog::info("===================");
     sad::evaluate_and_call(
         [&first, &second, &grid4, &matches]() { grid4.GetClosestPointForCloudMT(first, second, matches); },
         "Grid4 多线程", 10);
     EvaluateMatches(truth_matches, matches);
 
-    LOG(INFO) << "===================";
+    spdlog::info("===================");
     sad::evaluate_and_call(
         [&first, &second, &grid8, &matches]() { grid8.GetClosestPointForCloud(first, second, matches); },
         "Grid8 单线程", 10);
     EvaluateMatches(truth_matches, matches);
 
-    LOG(INFO) << "===================";
+    spdlog::info("===================");
     sad::evaluate_and_call(
         [&first, &second, &grid8, &matches]() { grid8.GetClosestPointForCloudMT(first, second, matches); },
         "Grid8 多线程", 10);
     EvaluateMatches(truth_matches, matches);
 
-    LOG(INFO) << "===================";
+    spdlog::info("===================");
     sad::evaluate_and_call(
         [&first, &second, &grid3, &matches]() { grid3.GetClosestPointForCloud(first, second, matches); },
         "Grid 3D 单线程", 10);
     EvaluateMatches(truth_matches, matches);
 
-    LOG(INFO) << "===================";
+    spdlog::info("===================");
     sad::evaluate_and_call(
         [&first, &second, &grid3, &matches]() { grid3.GetClosestPointForCloudMT(first, second, matches); },
         "Grid 3D 多线程", 10);
@@ -212,7 +216,7 @@ TEST(CH5_TEST, KDTREE_KNN) {
     pcl::io::loadPCDFile(FLAGS_second_scan_path, *second);
 
     if (first->empty() || second->empty()) {
-        LOG(ERROR) << "cannot load cloud";
+        spdlog::error("cannot load cloud");
         FAIL();
     }
 
@@ -225,7 +229,8 @@ TEST(CH5_TEST, KDTREE_KNN) {
 
     kdtree.SetEnableANN(true, FLAGS_ANN_alpha);
 
-    LOG(INFO) << "Kd tree leaves: " << kdtree.size() << ", points: " << first->size();
+    //
+    spdlog::info("Kd tree leaves: {}, points: {}", kdtree.size(), first->size());
 
     // 比较 bfnn
     std::vector<std::pair<size_t, size_t>> true_matches;
@@ -237,12 +242,12 @@ TEST(CH5_TEST, KDTREE_KNN) {
                            "Kd Tree 5NN 多线程", 1);
     EvaluateMatches(true_matches, matches);
 
-    LOG(INFO) << "building kdtree pcl";
+    spdlog::info("building kdtree pcl");
     // 对比PCL
     pcl::search::KdTree<sad::PointType> kdtree_pcl;
     sad::evaluate_and_call([&first, &kdtree_pcl]() { kdtree_pcl.setInputCloud(first); }, "Kd Tree build", 1);
 
-    LOG(INFO) << "searching pcl";
+    spdlog::info("searching pcl");
     matches.clear();
     std::vector<int> search_indices(second->size());
     for (int i = 0; i < second->points.size(); i++) {
@@ -263,7 +268,7 @@ TEST(CH5_TEST, KDTREE_KNN) {
     }
     EvaluateMatches(true_matches, matches);
 
-    LOG(INFO) << "done.";
+    spdlog::info("done.");
 
     SUCCEED();
 }
@@ -295,7 +300,8 @@ TEST(CH5_TEST, OCTREE_BASICS) {
     sad::OctoTree octree;
     octree.BuildTree(cloud);
     octree.SetApproximate(false);
-    LOG(INFO) << "Octo tree leaves: " << octree.size() << ", points: " << cloud->size();
+    //
+    spdlog::info("Octo tree leaves: {}, points: {}", octree.size(), cloud->size());
 
     SUCCEED();
 }
@@ -306,7 +312,7 @@ TEST(CH5_TEST, OCTREE_KNN) {
     pcl::io::loadPCDFile(FLAGS_second_scan_path, *second);
 
     if (first->empty() || second->empty()) {
-        LOG(ERROR) << "cannot load cloud";
+        spdlog::error("cannot load cloud");
         FAIL();
     }
 
@@ -318,30 +324,27 @@ TEST(CH5_TEST, OCTREE_KNN) {
     sad::evaluate_and_call([&first, &octree]() { octree.BuildTree(first); }, "Octo Tree build", 1);
 
     octree.SetApproximate(true, FLAGS_ANN_alpha);
-    LOG(INFO) << "Octo tree leaves: " << octree.size() << ", points: " << first->size();
+    //
+    spdlog::info("Octo tree leaves: {}, points: {}", octree.size(), first->size());
 
     /// 测试KNN
-    LOG(INFO) << "testing knn";
+    spdlog::info("testing knn");
     std::vector<std::pair<size_t, size_t>> matches;
     sad::evaluate_and_call([&first, &second, &octree, &matches]() { octree.GetClosestPointMT(second, matches, 5); },
                            "Octo Tree 5NN 多线程", 1);
 
-    LOG(INFO) << "comparing with bfnn";
+    spdlog::info("comparing with bfnn");
     /// 比较真值
     std::vector<std::pair<size_t, size_t>> true_matches;
     sad::bfnn_cloud_mt_k(first, second, true_matches);
     EvaluateMatches(true_matches, matches);
 
-    LOG(INFO) << "done.";
+    spdlog::info("done.");
 
     SUCCEED();
 }
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
-
     testing::InitGoogleTest(&argc, argv);
     google::ParseCommandLineFlags(&argc, &argv, true);
     return RUN_ALL_TESTS();

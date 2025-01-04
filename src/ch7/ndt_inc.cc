@@ -7,9 +7,9 @@
 #include "common/math_utils.h"
 #include "common/timer/timer.h"
 
-#include <glog/logging.h>
 #include <execution>
 #include <set>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -108,7 +108,7 @@ void IncNdt3d::UpdateVoxel(VoxelData& v) {
 }
 
 bool IncNdt3d::AlignNdt(SE3& init_pose) {
-    LOG(INFO) << "aligning with inc ndt, pts: " << source_->size() << ", grids: " << grids_.size();
+    spdlog::info("aligning with inc ndt, pts: {}, grids: {}", source_->size(), grids_.size());
     assert(grids_.empty() == false);
 
     SE3 pose = init_pose;
@@ -194,7 +194,7 @@ bool IncNdt3d::AlignNdt(SE3& init_pose) {
         }
 
         if (effective_num < options_.min_effective_pts_) {
-            LOG(WARNING) << "effective num too small: " << effective_num;
+            spdlog::warn("effective num too small: {}", effective_num);
             init_pose = pose;
             return false;
         }
@@ -204,12 +204,13 @@ bool IncNdt3d::AlignNdt(SE3& init_pose) {
         pose.translation() += dx.tail<3>();
 
         // 更新
-        LOG(INFO) << "iter " << iter << " total res: " << total_res << ", eff: " << effective_num
-                  << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm()
-                  << ", dx: " << dx.transpose();
+        //              << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm()
+        //              << ", dx: " << dx.transpose();
+        spdlog::info("iter {} total res: {}, eff: {}, mean res: {}, dxn: {}, dx: {}", iter, total_res, effective_num,
+                     total_res / effective_num, dx.norm(), dx.transpose());
 
         if (dx.norm() < options_.eps_) {
-            LOG(INFO) << "converged, dx = " << dx.transpose();
+            spdlog::info("converged, dx = {}", dx.transpose());
             break;
         }
     }
@@ -302,7 +303,7 @@ void IncNdt3d::ComputeResidualAndJacobians(const SE3& input_pose, Mat18d& HTVH, 
         HTVr += -jacobians[idx].transpose() * infos[idx] * errors[idx] * info_ratio;
     }
 
-    LOG(INFO) << "effective: " << effective_num;
+    spdlog::info("effective: {}", effective_num);
 }
 
 void IncNdt3d::BuildNDTEdges(sad::VertexPose* v, std::vector<EdgeNDT*>& edges) {

@@ -40,7 +40,7 @@ LioPreinteg::LioPreinteg(Options options) : options_(options), preinteg_(new IMU
 
 bool LioPreinteg::Init(const std::string &config_yaml) {
     if (!LoadFromYAML(config_yaml)) {
-        LOG(INFO) << "init failed.";
+        spdlog::info("init failed.");
         return false;
     }
 
@@ -53,7 +53,7 @@ bool LioPreinteg::Init(const std::string &config_yaml) {
 }
 
 void LioPreinteg::ProcessMeasurements(const MeasureGroup &meas) {
-    LOG(INFO) << "call meas, imu: " << meas.imu_.size() << ", lidar pts: " << meas.lidar_->size();
+    spdlog::info("call meas, imu: {}, lidar pts: {}", meas.imu_.size(), meas.lidar_->size());
     measures_ = meas;
 
     if (imu_need_init_) {
@@ -112,7 +112,7 @@ void LioPreinteg::Align() {
     }
 
     // 后续的scan，使用NDT配合pose进行更新
-    LOG(INFO) << "=== frame " << frame_num_;
+    spdlog::info("=== frame {}", frame_num_);
     ndt_.SetSource(current_scan_filter);
 
     current_nav_state_ = preinteg_->Predict(last_nav_state_, imu_init_.GetGravity());
@@ -163,11 +163,11 @@ void LioPreinteg::TryInitIMU() {
         current_nav_state_.bg_ = imu_init_.GetInitBg();
         current_nav_state_.ba_ = imu_init_.GetInitBa();
         current_nav_state_.timestamp_ = measures_.imu_.back()->timestamp_;
-        
+
         last_nav_state_ = current_nav_state_;
         last_imu_ = measures_.imu_.back();
 
-        LOG(INFO) << "IMU初始化成功";
+        spdlog::info("IMU初始化成功");
     }
 }
 
@@ -221,14 +221,14 @@ void LioPreinteg::Finish() {
     if (ui_) {
         ui_->Quit();
     }
-    LOG(INFO) << "finish done";
+    spdlog::info("finish done");
 }
 
 void LioPreinteg::Optimize() {
     // 调用g2o求解优化问题
     // 上一个state到本时刻state的预积分因子，本时刻的NDT因子
-    LOG(INFO) << " === optimizing frame " << frame_num_ << " === "
-              << ", dt: " << preinteg_->dt_;
+    //              << ", dt: " << preinteg_->dt_;
+    spdlog::info(" === optimizing frame {} === , dt: {}", frame_num_, preinteg_->dt_);
 
     /// NOTE 这些东西是对参数非常敏感的。相差几个数量级的话，容易出现优化不动的情况
 
@@ -323,10 +323,11 @@ void LioPreinteg::Optimize() {
     optimizer.addEdge(edge_ndt);
 
     if (options_.verbose_) {
-        LOG(INFO) << "last: " << last_nav_state_;
-        LOG(INFO) << "pred: " << current_nav_state_;
-        LOG(INFO) << "NDT: " << ndt_pose_.translation().transpose() << ","
-                  << ndt_pose_.so3().unit_quaternion().coeffs().transpose();
+        //              << ndt_pose_.so3().unit_quaternion().coeffs().transpose();
+        spdlog::info("last: {}", last_nav_state_);
+        spdlog::info("pred: {}", current_nav_state_);
+        spdlog::info("NDT: {}, {}", ndt_pose_.translation().transpose(),
+                     ndt_pose_.so3().unit_quaternion().coeffs().transpose());
     }
 
     v0_bg->setFixed(true);
@@ -351,11 +352,11 @@ void LioPreinteg::Optimize() {
     current_nav_state_.ba_ = v1_ba->estimate();
 
     if (options_.verbose_) {
-        LOG(INFO) << "last changed to: " << last_nav_state_;
-        LOG(INFO) << "curr changed to: " << current_nav_state_;
-        LOG(INFO) << "preinteg chi2: " << edge_inertial->chi2() << ", err: " << edge_inertial->error().transpose();
-        LOG(INFO) << "prior chi2: " << edge_prior->chi2() << ", err: " << edge_prior->error().transpose();
-        LOG(INFO) << "ndt: " << edge_ndt->chi2() << "/" << edge_ndt->error().transpose();
+        spdlog::info("last changed to: {}", last_nav_state_);
+        spdlog::info("curr changed to: {}", current_nav_state_);
+        spdlog::info("preinteg chi2: {}, err: {}", edge_inertial->chi2(), edge_inertial->error().transpose());
+        spdlog::info("prior chi2: {}, err: {}", edge_prior->chi2(), edge_prior->error().transpose());
+        spdlog::info("ndt: {}/{}", edge_ndt->chi2(), edge_ndt->error().transpose());
     }
 
     /// 重置预积分
@@ -392,8 +393,8 @@ void LioPreinteg::Optimize() {
     prior_info_ = H.block<15, 15>(15, 15);
 
     if (options_.verbose_) {
-        LOG(INFO) << "info trace: " << prior_info_.trace();
-        LOG(INFO) << "optimization done.";
+        spdlog::info("info trace: {}", prior_info_.trace());
+        spdlog::info("optimization done.");
     }
 
     NormalizeVelocity();

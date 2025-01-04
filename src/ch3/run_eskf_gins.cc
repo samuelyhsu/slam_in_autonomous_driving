@@ -8,10 +8,11 @@
 #include "tools/ui/pangolin_window.h"
 #include "utm_convert.h"
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <fstream>
 #include <iomanip>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
+
 
 DEFINE_string(txt_path, "./data/ch3/10.txt", "数据文件路径");
 DEFINE_double(antenna_angle, 12.06, "RTK天线安装偏角（角度）");
@@ -24,9 +25,6 @@ DEFINE_bool(with_odom, false, "是否加入轮速计信息");
  * 本程序演示使用RTK+IMU进行组合导航
  */
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     if (fLS::FLAGS_txt_path.empty()) {

@@ -8,9 +8,10 @@
 #include "common/eigen_types.h"
 #include "common/point_types.h"
 
-#include <glog/logging.h>
 #include <map>
 #include <queue>
+#include "spdlog/spdlog.h"
+
 
 namespace sad {
 

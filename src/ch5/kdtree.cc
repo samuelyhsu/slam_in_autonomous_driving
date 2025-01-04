@@ -5,9 +5,9 @@
 #include "ch5/kdtree.h"
 #include "common/math_utils.h"
 
-#include <glog/logging.h>
 #include <execution>
 #include <set>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -68,7 +68,8 @@ void KdTree::Insert(const IndexVec &points, KdTreeNode *node) {
 
 bool KdTree::GetClosestPoint(const PointType &pt, std::vector<int> &closest_idx, int k) {
     if (k > size_) {
-        LOG(ERROR) << "cannot set k larger than cloud size: " << k << ", " << size_;
+        //
+        spdlog::error("cannot set k larger than cloud size: {}, {}", k, size_);
         return false;
     }
     k_ = k;
@@ -226,9 +227,12 @@ void KdTree::PrintAll() {
     for (const auto &np : nodes_) {
         auto node = np.second;
         if (node->left_ == nullptr && node->right_ == nullptr) {
-            LOG(INFO) << "leaf node: " << node->id_ << ", idx: " << node->point_idx_;
+            //
+            spdlog::info("leaf node: {}, idx: {}", node->id_, node->point_idx_);
         } else {
-            LOG(INFO) << "node: " << node->id_ << ", axis: " << node->axis_index_ << ", th: " << node->split_thresh_;
+            //
+            // node->split_thresh_;
+            spdlog::info("node: {}, axis: {}, th: {}", node->id_, node->axis_index_, node->split_thresh_);
         }
     }
 }

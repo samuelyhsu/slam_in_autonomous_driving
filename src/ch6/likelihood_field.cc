@@ -5,7 +5,7 @@
 #include "ch6/g2o_types.h"
 #include "ch6/likelihood_filed.h"
 
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 
 #include <g2o/core/base_unary_edge.h>
 #include <g2o/core/block_solver.h>
@@ -125,8 +125,6 @@ bool LikelihoodField::AlignGaussNewton(SE2& init_pose) {
         if (iter > 0 && cost >= lastCost) {
             break;
         }
-
-        LOG(INFO) << "iter " << iter << " cost = " << cost << ", effect num: " << effective_num;
 
         current_pose.translation() += dx.head<2>();
         current_pose.so2() = current_pose.so2() * SO2::exp(dx[2]);

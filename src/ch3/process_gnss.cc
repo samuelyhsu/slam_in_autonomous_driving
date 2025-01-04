@@ -2,12 +2,13 @@
 // Created by xiang on 2022/1/4.
 //
 
-#include <glog/logging.h>
 #include <iomanip>
 #include <memory>
+#include "spdlog/spdlog.h"
 
 #include "common/gnss.h"
 #include "common/io_utils.h"
+#include "gflags/gflags.h"
 #include "tools/ui/pangolin_window.h"
 #include "utm_convert.h"
 
@@ -28,9 +29,6 @@ DEFINE_bool(with_ui, true, "是否显示图形界面");
  */
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     if (fLS::FLAGS_txt_path.empty()) {

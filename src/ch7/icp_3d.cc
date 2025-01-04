@@ -10,7 +10,7 @@
 namespace sad {
 
 bool Icp3d::AlignP2P(SE3& init_pose) {
-    LOG(INFO) << "aligning with point to point";
+    spdlog::info("aligning with point to point");
     assert(target_ != nullptr && source_ != nullptr);
 
     SE3 pose = init_pose;
@@ -81,7 +81,7 @@ bool Icp3d::AlignP2P(SE3& init_pose) {
             });
 
         if (effective_num < options_.min_effective_pts_) {
-            LOG(WARNING) << "effective num too small: " << effective_num;
+            spdlog::warn("effective num too small: {}", effective_num);
             return false;
         }
 
@@ -93,16 +93,17 @@ bool Icp3d::AlignP2P(SE3& init_pose) {
         pose.translation() += dx.tail<3>();
 
         // 更新
-        LOG(INFO) << "iter " << iter << " total res: " << total_res << ", eff: " << effective_num
-                  << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm();
+        //              << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm();
+        spdlog::info("iter {} total res: {}, eff: {}, mean res: {}, dxn: {}", iter, total_res, effective_num,
+                     total_res / effective_num, dx.norm());
 
         if (gt_set_) {
             double pose_error = (gt_pose_.inverse() * pose).log().norm();
-            LOG(INFO) << "iter " << iter << " pose error: " << pose_error;
+            spdlog::info("iter {} pose error: {}", iter, pose_error);
         }
 
         if (dx.norm() < options_.eps_) {
-            LOG(INFO) << "converged, dx = " << dx.transpose();
+            spdlog::info("converged, dx = {}", dx.transpose());
             break;
         }
     }
@@ -112,7 +113,7 @@ bool Icp3d::AlignP2P(SE3& init_pose) {
 }
 
 bool Icp3d::AlignP2Plane(SE3& init_pose) {
-    LOG(INFO) << "aligning with point to plane";
+    spdlog::info("aligning with point to plane");
     assert(target_ != nullptr && source_ != nullptr);
     // 整体流程与p2p一致，读者请关注变化部分
 
@@ -192,7 +193,7 @@ bool Icp3d::AlignP2Plane(SE3& init_pose) {
             });
 
         if (effective_num < options_.min_effective_pts_) {
-            LOG(WARNING) << "effective num too small: " << effective_num;
+            spdlog::warn("effective num too small: {}", effective_num);
             return false;
         }
 
@@ -204,16 +205,17 @@ bool Icp3d::AlignP2Plane(SE3& init_pose) {
         pose.translation() += dx.tail<3>();
 
         // 更新
-        LOG(INFO) << "iter " << iter << " total res: " << total_res << ", eff: " << effective_num
-                  << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm();
+        //              << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm();
+        spdlog::info("iter {} total res: {}, eff: {}, mean res: {}, dxn: {}", iter, total_res, effective_num,
+                     total_res / effective_num, dx.norm());
 
         if (gt_set_) {
             double pose_error = (gt_pose_.inverse() * pose).log().norm();
-            LOG(INFO) << "iter " << iter << " pose error: " << pose_error;
+            spdlog::info("iter {} pose error: {}", iter, pose_error);
         }
 
         if (dx.norm() < options_.eps_) {
-            LOG(INFO) << "converged, dx = " << dx.transpose();
+            spdlog::info("converged, dx = {}", dx.transpose());
             break;
         }
     }
@@ -229,14 +231,14 @@ void Icp3d::BuildTargetKdTree() {
 }
 
 bool Icp3d::AlignP2Line(SE3& init_pose) {
-    LOG(INFO) << "aligning with point to line";
+    spdlog::info("aligning with point to line");
     assert(target_ != nullptr && source_ != nullptr);
     // 点线与点面基本是完全一样的
 
     SE3 pose = init_pose;
     if (options_.use_initial_translation_) {
         pose.translation() = target_center_ - source_center_;  // 设置平移初始值
-        LOG(INFO) << "init trans set to " << pose.translation().transpose();
+        spdlog::info("init trans set to {}", pose.translation().transpose());
     }
 
     std::vector<int> index(source_->points.size());
@@ -311,7 +313,7 @@ bool Icp3d::AlignP2Line(SE3& init_pose) {
             });
 
         if (effective_num < options_.min_effective_pts_) {
-            LOG(WARNING) << "effective num too small: " << effective_num;
+            spdlog::warn("effective num too small: {}", effective_num);
             return false;
         }
 
@@ -324,15 +326,16 @@ bool Icp3d::AlignP2Line(SE3& init_pose) {
 
         if (gt_set_) {
             double pose_error = (gt_pose_.inverse() * pose).log().norm();
-            LOG(INFO) << "iter " << iter << " pose error: " << pose_error;
+            spdlog::info("iter {} pose error: {}", iter, pose_error);
         }
 
         // 更新
-        LOG(INFO) << "iter " << iter << " total res: " << total_res << ", eff: " << effective_num
-                  << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm();
+        //              << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm();
+        spdlog::info("iter {} total res: {}, eff: {}, mean res: {}, dxn: {}", iter, total_res, effective_num,
+                     total_res / effective_num, dx.norm());
 
         if (dx.norm() < options_.eps_) {
-            LOG(INFO) << "converged, dx = " << dx.transpose();
+            spdlog::info("converged, dx = {}", dx.transpose());
             break;
         }
     }

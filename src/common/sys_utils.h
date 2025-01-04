@@ -5,8 +5,8 @@
 #ifndef SLAM_IN_AUTO_DRIVING_SYS_UTILS_H
 #define SLAM_IN_AUTO_DRIVING_SYS_UTILS_H
 
-#include <glog/logging.h>
 #include <chrono>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -29,7 +29,7 @@ void evaluate_and_call(FuncT&& func, const std::string& func_name = "", int time
         total_time += std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1).count() * 1000;
     }
 
-    LOG(INFO) << "方法 " << func_name << " 平均调用时间/次数: " << total_time / times << "/" << times << " 毫秒.";
+    spdlog::info("方法 {} 平均调用时间/次数: {}/{} 毫秒.", func_name, total_time / times, times);
 }
 
 }  // namespace sad

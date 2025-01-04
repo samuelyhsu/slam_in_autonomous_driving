@@ -1,12 +1,12 @@
 #include "tools/ui/pangolin_window.h"
 #include "tools/ui/pangolin_window_impl.h"
 
-#include <glog/logging.h>
+#include "spdlog/spdlog.h"
 namespace sad::ui {
 
 PangolinWindow::PangolinWindow() { impl_ = std::make_shared<PangolinWindowImpl>(); }
 PangolinWindow::~PangolinWindow() {
-    LOG(INFO) << "pangolin window is deallocated.";
+    spdlog::info("pangolin window is deallocated.");
     Quit();
 }
 

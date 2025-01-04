@@ -2,8 +2,8 @@
 // Created by xiang on 2022/7/7.
 //
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
@@ -20,9 +20,6 @@ DEFINE_string(target, "./data/ch7/EPFL/kneeling_lady_target.pcd", "第2个点云
 DEFINE_string(ground_truth_file, "./data/ch7/EPFL/kneeling_lady_pose.txt", "真值Pose");
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     // EPFL 雕像数据集：./ch7/EPFL/aquarius_{sourcd.pcd, target.pcd}，真值在对应目录的_pose.txt中
@@ -52,13 +49,14 @@ int main(int argc, char** argv) {
             SE3 pose;
             success = icp.AlignP2P(pose);
             if (success) {
-                LOG(INFO) << "icp p2p align success, pose: " << pose.so3().unit_quaternion().coeffs().transpose()
-                          << ", " << pose.translation().transpose();
+                //              << ", " << pose.translation().transpose();
+                spdlog::info("icp p2p align success, pose: {}, {}", pose.so3().unit_quaternion().coeffs().transpose(),
+                             pose.translation().transpose());
                 sad::CloudPtr source_trans(new sad::PointCloudType);
                 pcl::transformPointCloud(*source, *source_trans, pose.matrix().cast<float>());
                 sad::SaveCloudToFile("./data/ch7/icp_trans.pcd", *source_trans);
             } else {
-                LOG(ERROR) << "align failed.";
+                spdlog::error("align failed.");
             }
         },
         "ICP P2P", 1);
@@ -73,13 +71,16 @@ int main(int argc, char** argv) {
             SE3 pose;
             success = icp.AlignP2Plane(pose);
             if (success) {
-                LOG(INFO) << "icp p2plane align success, pose: " << pose.so3().unit_quaternion().coeffs().transpose()
-                          << ", " << pose.translation().transpose();
+                // spdlog::info ("icp p2plane align success, pose: " <<
+                // pose.so3().unit_quaternion().coeffs().transpose()
+                //              << ", " << pose.translation().transpose();
+                spdlog::info("icp p2plane align success, pose: {}, {}",
+                             pose.so3().unit_quaternion().coeffs().transpose(), pose.translation().transpose());
                 sad::CloudPtr source_trans(new sad::PointCloudType);
                 pcl::transformPointCloud(*source, *source_trans, pose.matrix().cast<float>());
                 sad::SaveCloudToFile("./data/ch7/icp_plane_trans.pcd", *source_trans);
             } else {
-                LOG(ERROR) << "align failed.";
+                spdlog::error("align failed.");
             }
         },
         "ICP P2Plane", 1);
@@ -94,13 +95,14 @@ int main(int argc, char** argv) {
             SE3 pose;
             success = icp.AlignP2Line(pose);
             if (success) {
-                LOG(INFO) << "icp p2line align success, pose: " << pose.so3().unit_quaternion().coeffs().transpose()
-                          << ", " << pose.translation().transpose();
+                //              << ", " << pose.translation().transpose();
+                spdlog::info("icp p2line align success, pose: {}, {}",
+                             pose.so3().unit_quaternion().coeffs().transpose(), pose.translation().transpose());
                 sad::CloudPtr source_trans(new sad::PointCloudType);
                 pcl::transformPointCloud(*source, *source_trans, pose.matrix().cast<float>());
                 sad::SaveCloudToFile("./data/ch7/icp_line_trans.pcd", *source_trans);
             } else {
-                LOG(ERROR) << "align failed.";
+                spdlog::error("align failed.");
             }
         },
         "ICP P2Line", 1);
@@ -119,13 +121,15 @@ int main(int argc, char** argv) {
             SE3 pose;
             success = ndt.AlignNdt(pose);
             if (success) {
-                LOG(INFO) << "ndt align success, pose: " << pose.so3().unit_quaternion().coeffs().transpose() << ", "
-                          << pose.translation().transpose();
+                // "
+                //              << pose.translation().transpose();
+                spdlog::info("ndt align success, pose: {}, {}", pose.so3().unit_quaternion().coeffs().transpose(),
+                             pose.translation().transpose());
                 sad::CloudPtr source_trans(new sad::PointCloudType);
                 pcl::transformPointCloud(*source, *source_trans, pose.matrix().cast<float>());
                 sad::SaveCloudToFile("./data/ch7/ndt_trans.pcd", *source_trans);
             } else {
-                LOG(ERROR) << "align failed.";
+                spdlog::error("align failed.");
             }
         },
         "NDT", 1);
@@ -139,13 +143,14 @@ int main(int argc, char** argv) {
             sad::CloudPtr output_pcl(new sad::PointCloudType);
             icp_pcl.align(*output_pcl);
             SE3f T = SE3f(icp_pcl.getFinalTransformation());
-            LOG(INFO) << "pose from icp pcl: " << T.so3().unit_quaternion().coeffs().transpose() << ", "
-                      << T.translation().transpose();
+            //              << T.translation().transpose();
+            spdlog::info("pose from icp pcl: {}, {}", T.so3().unit_quaternion().coeffs().transpose(),
+                         T.translation().transpose());
             sad::SaveCloudToFile("./data/ch7/pcl_icp_trans.pcd", *output_pcl);
 
             // 计算GT pose差异
             double pose_error = (gt_pose.inverse() * T.cast<double>()).log().norm();
-            LOG(INFO) << "ICP PCL pose error: " << pose_error;
+            spdlog::info("ICP PCL pose error: {}", pose_error);
         },
         "ICP PCL", 1);
 
@@ -159,14 +164,15 @@ int main(int argc, char** argv) {
             sad::CloudPtr output_pcl(new sad::PointCloudType);
             ndt_pcl.align(*output_pcl);
             SE3f T = SE3f(ndt_pcl.getFinalTransformation());
-            LOG(INFO) << "pose from ndt pcl: " << T.so3().unit_quaternion().coeffs().transpose() << ", "
-                      << T.translation().transpose() << ', trans: ' << ndt_pcl.getTransformationProbability();
+            //              << T.translation().transpose() << ', trans: ' << ndt_pcl.getTransformationProbability();
+            spdlog::info("pose from ndt pcl: {}, {}, trans: {}", T.so3().unit_quaternion().coeffs().transpose(),
+                         T.translation().transpose(), ndt_pcl.getTransformationProbability());
             sad::SaveCloudToFile("./data/ch7/pcl_ndt_trans.pcd", *output_pcl);
-            LOG(INFO) << "score: " << ndt_pcl.getTransformationProbability();
+            spdlog::info("score: {}", ndt_pcl.getTransformationProbability());
 
             // 计算GT pose差异
             double pose_error = (gt_pose.inverse() * T.cast<double>()).log().norm();
-            LOG(INFO) << "NDT PCL pose error: " << pose_error;
+            spdlog::info("NDT PCL pose error: {}", pose_error);
         },
         "NDT PCL", 1);
 

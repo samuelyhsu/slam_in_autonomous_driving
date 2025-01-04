@@ -8,12 +8,11 @@ add_library(${PROJECT_NAME}.tools
         ui/ui_cloud.cc
         )
 
-target_link_libraries(${PROJECT_NAME}.tools
+target_link_libraries(${PROJECT_NAME}.tools PUBLIC
         ${third_party_libs}
         )
 
 add_executable(ui_test ui/ui_test.cc)
 target_link_libraries(ui_test
         ${PROJECT_NAME}.tools
-        ${third_party_libs}
         )

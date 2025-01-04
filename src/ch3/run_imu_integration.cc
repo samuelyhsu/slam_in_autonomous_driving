@@ -2,8 +2,10 @@
 // Created by xiang on 2021/11/5.
 //
 
-#include <glog/logging.h>
 #include <iomanip>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
+
 
 #include "ch3/imu_integration.h"
 #include "common/io_utils.h"
@@ -15,9 +17,6 @@ DEFINE_bool(with_ui, true, "是否显示图形界面");
 /// 本程序演示如何对IMU进行直接积分
 /// 该程序需要输入data/ch3/下的文本文件，同时它将状态输出到data/ch3/state.txt中，在UI中也可以观察到车辆运动
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     if (FLAGS_imu_txt_path.empty()) {

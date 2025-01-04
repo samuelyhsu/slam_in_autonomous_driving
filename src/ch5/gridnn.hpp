@@ -9,9 +9,9 @@
 #include "common/math_utils.h"
 #include "common/point_types.h"
 
-#include <glog/logging.h>
 #include <execution>
 #include <map>
+#include "spdlog/spdlog.h"
 
 namespace sad {
 
@@ -46,10 +46,10 @@ class GridNN {
 
         // check dim and nearby
         if (dim == 2 && nearby_type_ == NearbyType::NEARBY6) {
-            LOG(INFO) << "2D grid does not support nearby6, using nearby4 instead.";
+            spdlog::info("2D grid does not support nearby6, using nearby4 instead.");
             nearby_type_ = NearbyType::NEARBY4;
         } else if (dim == 3 && (nearby_type_ != NearbyType::NEARBY6 && nearby_type_ != NearbyType::CENTER)) {
-            LOG(INFO) << "3D grid does not support nearby4/8, using nearby6 instead.";
+            spdlog::info("3D grid does not support nearby4/8, using nearby6 instead.");
             nearby_type_ = NearbyType::NEARBY6;
         }
 
@@ -100,7 +100,7 @@ bool GridNN<dim>::SetPointCloud(CloudPtr cloud) {
     });
 
     cloud_ = cloud;
-    LOG(INFO) << "grids: " << grids_.size();
+    spdlog::info("grids: {}", grids_.size());
     return true;
 }
 

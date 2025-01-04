@@ -1,7 +1,6 @@
-cmake_minimum_required(VERSION 2.8.3)
 project(velodyne_msgs)
 
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs monitor_msgs geometry_msgs)
+find_package(catkin REQUIRED COMPONENTS monitor_msgs)
 
 add_message_files(
         DIRECTORY msg

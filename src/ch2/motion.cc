@@ -2,8 +2,8 @@
 // Created by xiang on 22-12-29.
 //
 
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#include "gflags/gflags.h"
+#include "spdlog/spdlog.h"
 
 #include "common/eigen_types.h"
 #include "common/math_utils.h"
@@ -17,9 +17,6 @@ DEFINE_double(linear_velocity, 5.0, "车辆前进线速度 m/s");
 DEFINE_bool(use_quaternion, false, "是否使用四元数计算");
 
 int main(int argc, char** argv) {
-    google::InitGoogleLogging(argv[0]);
-    FLAGS_stderrthreshold = google::INFO;
-    FLAGS_colorlogtostderr = true;
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     /// 可视化
@@ -48,7 +45,7 @@ int main(int argc, char** argv) {
             pose.so3() = pose.so3() * SO3::exp(omega * dt);
         }
 
-        LOG(INFO) << "pose: " << pose.translation().transpose();
+        spdlog::info("pose: {}", pose.translation().transpose());
         ui.UpdateNavState(sad::NavStated(0, pose, v_world));
 
         usleep(dt * 1e6);

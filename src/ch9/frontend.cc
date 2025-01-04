@@ -13,15 +13,15 @@ namespace sad {
 Frontend::Frontend(const std::string& config_yaml) { config_yaml_ = config_yaml; }
 
 bool Frontend::Init() {
-    LOG(INFO) << "load yaml from " << config_yaml_;
+    spdlog::info("load yaml from {}", config_yaml_);
     auto yaml = YAML::LoadFile(config_yaml_);
     try {
         auto n = yaml["bag_path"];
-        LOG(INFO) << Dump(n);
+        spdlog::info(Dump(n));
         bag_path_ = yaml["bag_path"].as<std::string>();
         lio_yaml_ = yaml["lio_yaml"].as<std::string>();
     } catch (...) {
-        LOG(ERROR) << "failed to parse yaml";
+        spdlog::error("failed to parse yaml");
         return false;
     }
 
@@ -66,7 +66,7 @@ void Frontend::Run() {
     // 保存运行结果
     SaveKeyframes();
 
-    LOG(INFO) << "done.";
+    spdlog::info("done.");
 }
 
 void Frontend::ExtractKeyFrame(const sad::NavStated& state) {
@@ -89,7 +89,7 @@ void Frontend::ExtractKeyFrame(const sad::NavStated& state) {
             FindGPSPose(kf);
             keyframes_.emplace(kf->id_, kf);
             kf->SaveAndUnloadScan("./data/ch9/");
-            LOG(INFO) << "生成关键帧" << kf->id_;
+            spdlog::info("生成关键帧{}", kf->id_);
             last_kf_ = kf;
         }
     }
@@ -126,7 +126,7 @@ void Frontend::RemoveMapOrigin() {
             map_origin_ = p.second->utm_pose_.translation();
             origin_set = true;
 
-            LOG(INFO) << "map origin is set to " << map_origin_.transpose();
+            spdlog::info("map origin is set to {}", map_origin_.transpose());
 
             auto yaml = YAML::LoadFile(config_yaml_);
             std::vector<double> ori{map_origin_[0], map_origin_[1], map_origin_[2]};
@@ -139,7 +139,7 @@ void Frontend::RemoveMapOrigin() {
     }
 
     if (origin_set) {
-        LOG(INFO) << "removing origin from rtk";
+        spdlog::info("removing origin from rtk");
         for (auto& p : gnss_) {
             p.second->utm_pose_.translation() -= map_origin_;
         }
