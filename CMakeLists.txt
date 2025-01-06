@@ -45,24 +45,15 @@ find_package(Sophus REQUIRED)
 print_package_info(Sophus)
 
 
-find_package(suitesparse CONFIG REQUIRED)
-print_package_info(suitesparse)
+find_package(CHOLMOD CONFIG REQUIRED)
+print_package_info(CHOLMOD)
 
+find_package(CXSparse CONFIG REQUIRED)
+print_package_info(CXSparse)
 
-# find_package(g2o REQUIRED)
-# g2o 使用thirdparty中的
-include_directories(${PROJECT_SOURCE_DIR}/thirdparty/g2o/)
-set(g2o_libs
-        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_stuff.so
-        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_core.so
-	# ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_solver_cholmod.so
-        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_solver_dense.so
-        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_solver_csparse.so
-        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_csparse_extension.so
-        ${PROJECT_SOURCE_DIR}/thirdparty/g2o/lib/libg2o_types_sba.so
-        ${CSPARSE_LIBRARY}
-        ${CHOLMOD_LIBRARY}
-        )
+find_package(g2o REQUIRED)
+print_package_info(g2o)
+set(g2o_libs g2o::stuff g2o::core g2o::types_sba g2o::types_icp g2o::solver_dense g2o::solver_csparse g2o::csparse_extension g2o::solver_cholmod g2o::solver_eigen)
 
 
 find_package(Pangolin CONFIG REQUIRED)
@@ -75,11 +66,9 @@ print_package_info(yaml-cpp)
 
 find_package(PCL CONFIG REQUIRED)
 print_package_info(PCL)
-# include_directories(${PCL_INCLUDE_DIRS})
         
 find_package(OpenCV CONFIG REQUIRED)
 print_package_info(OpenCV)
-# include_directories(${OpenCV_INCLUDE_DIRS})
 
 include_directories(${CMAKE_BINARY_DIR}/devel/include)
 
@@ -104,15 +93,14 @@ set(third_party_libs
         Eigen3::Eigen
         Sophus::Sophus
         ${Pangolin_LIBRARIES}
-        SuiteSparse::cholmod
-        SuiteSparse::cxsparse
+        SuiteSparse::CHOLMOD
+        SuiteSparse::CXSparse
         yaml-cpp::yaml-cpp
 # others
         pthread
         gflags
         TBB::tbb
         ${g2o_libs}
-        # g2o::core g2o::stuff g2o::types_sba g2o::csparse_extension
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
         ${catkin_LIBRARIES}
