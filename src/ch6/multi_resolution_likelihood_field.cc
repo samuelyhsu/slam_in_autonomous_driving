@@ -94,7 +94,7 @@ bool MRLikelihoodField::AlignInLevel(int level, SE2& init_pose) {
     using BlockSolverType = g2o::BlockSolver<g2o::BlockSolverTraits<3, 1>>;
     using LinearSolverType = g2o::LinearSolverCholmod<BlockSolverType::PoseMatrixType>;
     auto* solver = new g2o::OptimizationAlgorithmLevenberg(
-        g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
+        std::make_unique<BlockSolverType>(std::make_unique<LinearSolverType>()));
     g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(solver);
 

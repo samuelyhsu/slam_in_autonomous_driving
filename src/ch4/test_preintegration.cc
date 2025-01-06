@@ -289,7 +289,7 @@ void Optimize(sad::NavStated& last_state, sad::NavStated& this_state, sad::GNSS&
     using LinearSolverType = g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType>;
 
     auto* solver = new g2o::OptimizationAlgorithmGaussNewton(
-        g2o::make_unique<BlockSolverType>(g2o::make_unique<LinearSolverType>()));
+        std::make_unique<BlockSolverType>(std::make_unique<LinearSolverType>()));
     g2o::SparseOptimizer optimizer;
     optimizer.setAlgorithm(solver);
 
