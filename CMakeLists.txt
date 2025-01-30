@@ -96,11 +96,11 @@ set(third_party_libs
         SuiteSparse::CHOLMOD
         SuiteSparse::CXSparse
         yaml-cpp::yaml-cpp
+        ${g2o_libs}
 # others
         pthread
         gflags
         TBB::tbb
-        ${g2o_libs}
         ${OpenCV_LIBS}
         ${PCL_LIBRARIES}
         ${catkin_LIBRARIES}
