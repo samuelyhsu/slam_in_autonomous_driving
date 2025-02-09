@@ -1,3 +1,4 @@
+add_subdirectory(tools)
 add_subdirectory(common)
 add_subdirectory(ch2)
 add_subdirectory(ch3)
@@ -9,4 +10,4 @@ add_subdirectory(ch8)
 add_subdirectory(ch9)
 add_subdirectory(ch10)
 
-add_subdirectory(tools)
+add_subdirectory(ch2_practice)
