@@ -2,7 +2,6 @@
 #include "gflags/gflags.h"
 #include "spdlog/spdlog.h"
 
-
 #include "common/eigen_types.h"
 #include "common/math_utils.h"
 

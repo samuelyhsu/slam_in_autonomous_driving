@@ -63,6 +63,6 @@ class Timer {
     static std::map<std::string, TimerRecord> records_;
 };
 
-}  // namespace sad::utils
+}  // namespace sad::common
 
 #endif  // FUSION_TIMER_H

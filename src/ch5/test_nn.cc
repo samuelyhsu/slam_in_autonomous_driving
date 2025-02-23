@@ -5,7 +5,6 @@
 #include "gflags/gflags.h"
 #include "spdlog/spdlog.h"
 
-
 #include <pcl/io/pcd_io.h>
 #include <pcl/search/kdtree.h>
 

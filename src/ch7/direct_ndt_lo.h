@@ -26,7 +26,7 @@ class DirectNDTLO {
         double kf_distance_ = 0.5;            // 关键帧距离
         double kf_angle_deg_ = 30;            // 旋转角度
         int num_kfs_in_local_map_ = 30;       // 局部地图含有多少个关键帧
-        bool use_pcl_ndt_ = true;            // 使用本章的NDT还是PCL的NDT
+        bool use_pcl_ndt_ = true;             // 使用本章的NDT还是PCL的NDT
         bool display_realtime_cloud_ = true;  // 是否显示实时点云
 
         Ndt3d::Options ndt3d_options_;  // NDT3D 的配置

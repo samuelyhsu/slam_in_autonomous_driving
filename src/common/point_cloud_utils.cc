@@ -26,7 +26,7 @@ void VoxelGrid(CloudPtr cloud, float voxel_size) {
 /// 移除地面
 void RemoveGround(CloudPtr cloud, float z_min) {
     CloudPtr output(new PointCloudType);
-    for (const auto& pt : cloud->points) {
+    for (const auto &pt : cloud->points) {
         if (pt.z > z_min) {
             output->points.emplace_back(pt);
         }
@@ -39,7 +39,7 @@ void RemoveGround(CloudPtr cloud, float z_min) {
 }
 
 /// 写点云文件
-template<typename CloudType> 
+template <typename CloudType>
 void SaveCloudToFile(const std::string &filePath, CloudType &cloud) {
     cloud.height = 1;
     cloud.width = cloud.size();

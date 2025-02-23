@@ -18,7 +18,7 @@ void VoxelGrid(CloudPtr cloud, float voxel_size = 0.05);
 void RemoveGround(CloudPtr cloud, float z_min = 0.5);
 
 /// 写点云文件
-template<typename CloudType> 
+template <typename CloudType>
 void SaveCloudToFile(const std::string &filePath, CloudType &cloud);
 
 }  // namespace sad

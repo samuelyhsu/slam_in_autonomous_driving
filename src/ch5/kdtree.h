@@ -12,7 +12,6 @@
 #include <queue>
 #include "spdlog/spdlog.h"
 
-
 namespace sad {
 
 /// Kd树节点，二叉树结构，内部用祼指针，对外一个root的shared_ptr

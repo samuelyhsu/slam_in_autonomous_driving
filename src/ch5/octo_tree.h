@@ -12,7 +12,6 @@
 #include <queue>
 #include "spdlog/spdlog.h"
 
-
 namespace sad {
 
 // 3D Box 记录各轴上的最大最小值
