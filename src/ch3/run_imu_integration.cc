@@ -6,7 +6,6 @@
 #include "gflags/gflags.h"
 #include "spdlog/spdlog.h"
 
-
 #include "ch3/imu_integration.h"
 #include "common/io_utils.h"
 #include "tools/ui/pangolin_window.h"

@@ -1,9 +1,6 @@
 add_library(
   ${PROJECT_NAME}.ch3
-  static_imu_init.cc
-  utm_convert.cc
-  # ieskf/nav_state_manifold.cc
-  # ieskf/ieskf.cc
+  static_imu_init.cc utm_convert.cc
   ${PROJECT_SOURCE_DIR}/thirdparty/utm_convert/utm.cc
   ${PROJECT_SOURCE_DIR}/thirdparty/utm_convert/tranmerc.cc)
 
