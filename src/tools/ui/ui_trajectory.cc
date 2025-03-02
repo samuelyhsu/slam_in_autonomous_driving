@@ -14,6 +14,16 @@ void UiTrajectory::AddPt(const SE3& pose) {
     vbo_ = pangolin::GlBuffer(pangolin::GlArrayBuffer, pos_);
 }
 
+void UiTrajectory::AddPts(const std::vector<SE3>& poses) {
+    for (const auto& pose : poses) {
+        pos_.emplace_back(pose.translation().cast<float>());
+    }
+    if (pos_.size() > max_size_) {
+        pos_.erase(pos_.begin(), pos_.begin() + pos_.size() / 2);
+    }
+    vbo_ = pangolin::GlBuffer(pangolin::GlArrayBuffer, pos_);
+}
+
 void UiTrajectory::Render() {
     if (!vbo_.IsValid()) {
         return;

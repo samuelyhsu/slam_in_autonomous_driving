@@ -19,6 +19,8 @@ class UiTrajectory {
     /// 增加一个轨迹点
     void AddPt(const SE3& pose);
 
+    void AddPts(const std::vector<SE3>& poses);
+
     /// 渲染此轨迹
     void Render();
 
