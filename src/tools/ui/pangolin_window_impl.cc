@@ -115,7 +115,8 @@ bool PangolinWindowImpl::UpdateState() {
     log_bias_gyr_.Log(bias_gyr_(0), bias_gyr_(1), bias_gyr_(2));
 
     current_pose_ = pose_;
-    traj_lidarloc_ui_->AddPt(current_pose_);
+    traj_lidarloc_ui_->AddPts(current_poses_);
+    current_poses_.clear();
 
     kf_result_need_update_.store(false);
     return false;

@@ -65,6 +65,8 @@ class PangolinWindowImpl {
     CloudPtr current_scan_ = nullptr;  // 当前scan
     SE3 current_pose_;                 // 当前scan对应的pose
 
+    std::vector<SE3> current_poses_;
+
     // 地图点云
     std::map<Vec2i, CloudPtr, less_vec<2>> cloud_global_map_;
 

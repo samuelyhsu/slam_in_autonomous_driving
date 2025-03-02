@@ -48,6 +48,7 @@ void PangolinWindow::UpdateNavState(const NavStated& state) {
     impl_->bias_acc_ = state.ba_;
     impl_->bias_gyr_ = state.bg_;
 
+    impl_->current_poses_.push_back(impl_->pose_);
     impl_->kf_result_need_update_.store(true);
 }
 
