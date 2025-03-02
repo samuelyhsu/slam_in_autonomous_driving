@@ -8,9 +8,9 @@ namespace sad::ui {
 
 std::vector<Vec3f> UiCar::car_vertices_ = {
     // clang-format off
-     { 0, 0, 0}, { 5, 0, 0},
-     { 0, 0, 0}, { 0, 3, 0},
-     { 0, 0, 0}, { 0, 0, 1},
+     { 0, 0, 0}, { 10, 0, 0},
+     { 0, 0, 0}, { 0, 6, 0},
+     { 0, 0, 0}, { 0, 0, 2},
     // clang-format on
 };
 
@@ -33,7 +33,9 @@ void UiCar::SetPose(const SE3& pose) {
 void UiCar::Render() {
     if (vbo_.IsValid()) {
         glColor3f(color_[0], color_[1], color_[2]);
+        glLineWidth(5.0);
         pangolin::RenderVbo(vbo_, GL_LINES);
+        glLineWidth(1.0);
     }
 }
 
