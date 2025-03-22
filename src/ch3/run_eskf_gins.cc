@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include "common/math_utils.h"
 #include "gflags/gflags.h"
 #include "spdlog/spdlog.h"
 
@@ -19,6 +20,9 @@ DEFINE_double(antenna_pox_x, -0.17, "RTK天线安装偏移X");
 DEFINE_double(antenna_pox_y, -0.20, "RTK天线安装偏移Y");
 DEFINE_bool(with_ui, true, "是否显示图形界面");
 DEFINE_bool(with_odom, false, "是否加入轮速计信息");
+DEFINE_bool(use_gnss_heading, false, "use gnss heading");
+DEFINE_double(observe_interval, 0, "gnss observe interval in seconds");
+DEFINE_double(ui_ms_delay, 0, "ui update delay in ms");
 
 /**
  * 本程序演示使用RTK+IMU进行组合导航
@@ -42,13 +46,15 @@ int main(int argc, char** argv) {
         fout << q.w() << " " << q.x() << " " << q.y() << " " << q.z() << " ";
     };
 
-    auto save_result = [&save_vec3, &save_quat](std::ofstream& fout, const sad::NavStated& save_state) {
+    auto save_result = [&save_vec3, &save_quat](std::ofstream& fout, const sad::NavStated& save_state,
+                                                const Vec3d& gravity) {
         fout << std::setprecision(18) << save_state.timestamp_ << " " << std::setprecision(9);
         save_vec3(fout, save_state.p_);
         save_quat(fout, save_state.R_.unit_quaternion());
         save_vec3(fout, save_state.v_);
         save_vec3(fout, save_state.bg_);
         save_vec3(fout, save_state.ba_);
+        save_vec3(fout, gravity);
         fout << std::endl;
     };
 
@@ -65,6 +71,8 @@ int main(int argc, char** argv) {
     bool first_gnss_set = false;
     Vec3d origin = Vec3d::Zero();
 
+    static double prev_gnss_time;
+
     io.SetIMUProcessFunc([&](const sad::IMU& imu) {
           /// IMU 处理函数
           if (!imu_init.InitSuccess()) {
@@ -79,6 +87,9 @@ int main(int argc, char** argv) {
               // 噪声由初始化器估计
               options.gyro_var_ = sqrt(imu_init.GetCovGyro()[0]);
               options.acce_var_ = sqrt(imu_init.GetCovAcce()[0]);
+              //   options.bias_gyro_var_ = 1e-6;
+              //   options.bias_acce_var_ = 1e-4;
+              //   options.gnss_ang_noise_ = 5 * sad::math::kDEG2RAD;
               eskf.SetInitialConditions(options, imu_init.GetInitBg(), imu_init.GetInitBa(), imu_init.GetGravity());
               imu_inited = true;
               return;
@@ -94,14 +105,14 @@ int main(int argc, char** argv) {
 
           /// predict就会更新ESKF，所以此时就可以发送数据
           auto state = eskf.GetNominalState();
+          auto gravity = eskf.GetGravity();
+
           if (ui) {
               ui->UpdateNavState(state);
           }
 
           /// 记录数据以供绘图
-          save_result(fout, state);
-
-          usleep(1e3);
+          save_result(fout, state, gravity);
       })
         .SetGNSSProcessFunc([&](const sad::GNSS& gnss) {
             /// GNSS 处理函数
@@ -114,6 +125,20 @@ int main(int argc, char** argv) {
                 return;
             }
 
+#if 1
+            static double prev_time;
+            if (gnss_convert.unix_time_ - prev_time < FLAGS_observe_interval) {
+                return;
+            }
+            prev_time = gnss_convert.unix_time_;
+            if (!FLAGS_use_gnss_heading) {
+                gnss_convert.heading_valid_ = false;
+            }
+
+#endif
+
+            prev_gnss_time = prev_time;
+
             /// 去掉原点
             if (!first_gnss_set) {
                 origin = gnss_convert.utm_pose_.translation();
@@ -125,12 +150,14 @@ int main(int argc, char** argv) {
             eskf.ObserveGps(gnss_convert);
 
             auto state = eskf.GetNominalState();
+            auto gravity = eskf.GetGravity();
             if (ui) {
                 ui->UpdateNavState(state);
             }
-            save_result(fout, state);
+            save_result(fout, state, gravity);
 
             gnss_inited = true;
+            usleep(FLAGS_ui_ms_delay * 1e3);
         })
         .SetOdomProcessFunc([&](const sad::Odom& odom) {
             /// Odom 处理函数，本章Odom只给初始化使用
