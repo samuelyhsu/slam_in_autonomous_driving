@@ -4,6 +4,7 @@
 
 #include <iomanip>
 #include <memory>
+#include "fmt/ranges.h"
 #include "spdlog/spdlog.h"
 
 #include "common/gnss.h"
@@ -19,6 +20,9 @@ DEFINE_double(antenna_angle, 12.06, "RTK天线安装偏角（角度）");
 DEFINE_double(antenna_pox_x, -0.17, "RTK天线安装偏移X");
 DEFINE_double(antenna_pox_y, -0.20, "RTK天线安装偏移Y");
 DEFINE_bool(with_ui, true, "是否显示图形界面");
+DEFINE_double(observe_interval, 0, "gnss observe interval in seconds");
+DEFINE_bool(only_heading_valid, false, "only use heading valid data");
+DEFINE_double(ui_ms_delay, 0, "ui update delay in ms");
 
 /**
  * 本程序演示如何处理GNSS数据
@@ -29,6 +33,7 @@ DEFINE_bool(with_ui, true, "是否显示图形界面");
  */
 
 int main(int argc, char** argv) {
+    spdlog::info("{}", fmt::join(argv, argv + argc, " "));
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     if (fLS::FLAGS_txt_path.empty()) {
@@ -63,6 +68,18 @@ int main(int argc, char** argv) {
     io.SetGNSSProcessFunc([&](const sad::GNSS& gnss) {
           sad::GNSS gnss_out = gnss;
           if (sad::ConvertGps2UTM(gnss_out, antenna_pos, FLAGS_antenna_angle)) {
+#if 1
+              if (FLAGS_only_heading_valid) {
+                  if (!gnss_out.heading_valid_) {
+                      return;
+                  }
+              }
+              static double prev_time;
+              if (gnss_out.unix_time_ - prev_time < FLAGS_observe_interval) {
+                  return;
+              }
+              prev_time = gnss_out.unix_time_;
+#endif
               if (!first_gnss_set) {
                   origin = gnss_out.utm_pose_.translation();
                   first_gnss_set = true;
@@ -76,7 +93,7 @@ int main(int argc, char** argv) {
               if (ui) {
                   ui->UpdateNavState(
                       sad::NavStated(gnss_out.unix_time_, gnss_out.utm_pose_.so3(), gnss_out.utm_pose_.translation()));
-                  usleep(1e3);
+                  usleep(FLAGS_ui_ms_delay * 1e3);
               }
           }
       }).Go();
