@@ -163,7 +163,7 @@ class ESKF {
     void UpdateAndReset() {
         p_ += dx_.template block<3, 1>(0, 0);
         v_ += dx_.template block<3, 1>(3, 0);
-#ifdef USE_MY_CODE
+#ifdef USE_LEFT_PERTURBATION
         R_ = SO3::exp(dx_.template block<3, 1>(6, 0)) * R_;
 #else
         R_ = R_ * SO3::exp(dx_.template block<3, 1>(6, 0));
@@ -186,7 +186,7 @@ class ESKF {
     /// 对P阵进行投影，参考式(3.63)
     void ProjectCov() {
         Mat18T J = Mat18T::Identity();
-#ifdef USE_MY_CODE
+#ifdef USE_LEFT_PERTURBATION
         J.template block<3, 3>(6, 6) = Mat3T::Identity() + 0.5 * SO3::hat(dx_.template block<3, 1>(6, 0));
 #else
         J.template block<3, 3>(6, 6) = Mat3T::Identity() - 0.5 * SO3::hat(dx_.template block<3, 1>(6, 0));
@@ -253,7 +253,7 @@ bool ESKF<S>::Predict(const IMU& imu) {
     // F实际上是稀疏矩阵，也可以不用矩阵形式进行相乘而是写成散装形式，这里为了教学方便，使用矩阵形式
 
     Mat18T F = Mat18T::Identity();  // 主对角线
-#ifdef USE_MY_CODE
+#ifdef USE_LEFT_PERTURBATION
     F.template block<3, 3>(0, 3) = Mat3T::Identity() * dt;                           // p 对 v
     F.template block<3, 3>(3, 6) = -SO3::hat(R_.matrix() * (imu.acce_ - ba_)) * dt;  // v 对 theta
     F.template block<3, 3>(3, 12) = -R_.matrix() * dt;                               // v 对 ba
@@ -279,12 +279,6 @@ template <typename S>
 bool ESKF<S>::ObserveWheelSpeed(const Odom& odom) {
     assert(odom.timestamp_ >= current_time_);
     // odom 修正以及雅可比
-    // 使用三维的轮速观测，H为3x18，大部分为零
-    Eigen::Matrix<S, 3, 18> H = Eigen::Matrix<S, 3, 18>::Zero();
-    H.template block<3, 3>(0, 3) = Mat3T::Identity();
-
-    // 卡尔曼增益
-    Eigen::Matrix<S, 18, 3> K = cov_ * H.transpose() * (H * cov_ * H.transpose() + odom_noise_).inverse();
 
     // velocity obs
     double velo_l = options_.wheel_radius_ * odom.left_pulse_ / options_.circle_pulse_ * 2 * M_PI / options_.odom_span_;
@@ -293,9 +287,30 @@ bool ESKF<S>::ObserveWheelSpeed(const Odom& odom) {
     double average_vel = 0.5 * (velo_l + velo_r);
 
     VecT vel_odom(average_vel, 0.0, 0.0);
-    VecT vel_world = R_ * vel_odom;
 
+    Eigen::Matrix<S, 3, 18> H = Eigen::Matrix<S, 3, 18>::Zero();
+
+#ifdef USE_ORIGINAL_CODE
+
+    H.template block<3, 3>(0, 3) = Mat3T::Identity();
+    Eigen::Matrix<S, 18, 3> K = cov_ * H.transpose() * (H * cov_ * H.transpose() + odom_noise_).inverse();
+    VecT vel_world = R_ * vel_odom;
     dx_ = K * (vel_world - v_);
+
+#else
+
+#ifdef USE_LEFT_PERTURBATION
+    H.template block<3, 3>(0, 3) = R_.inverse().matrix();
+    H.template block<3, 3>(0, 6) = R_.inverse().matrix() * SO3::hat(v_);
+#else
+    H.template block<3, 3>(0, 3) = R_.inverse().matrix();
+    H.template block<3, 3>(0, 6) = SO3::hat(R_.inverse() * v_);
+#endif
+    Eigen::Matrix<S, 18, 3> K = cov_ * H.transpose() * (H * cov_ * H.transpose() + odom_noise_).inverse();
+    VecT vel_odom_ = R_.inverse() * v_;
+    dx_ = K * (vel_odom - vel_odom_);
+
+#endif
 
     // update cov
     cov_ = (Mat18T::Identity() - K * H) * cov_;
@@ -345,7 +360,7 @@ bool ESKF<S>::ObserveSE3(const SE3& pose, double trans_noise, double ang_noise) 
     Vec6d innov = Vec6d::Zero();
     innov.template head<3>() = (pose.translation() - p_);  // 平移部分
     // 旋转部分(3.67)
-#ifdef USE_MY_CODE
+#ifdef USE_LEFT_PERTURBATION
     innov.template tail<3>() = (pose.so3() * R_.inverse()).log();
 #else
     innov.template tail<3>() = (R_.inverse() * pose.so3()).log();

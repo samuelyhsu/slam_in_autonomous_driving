@@ -5,7 +5,8 @@ add_library(
   static_imu_init.cc utm_convert.cc
   ${PROJECT_SOURCE_DIR}/thirdparty/utm_convert/utm.cc
   ${PROJECT_SOURCE_DIR}/thirdparty/utm_convert/tranmerc.cc)
-target_compile_definitions(${LIB_NAME} PUBLIC USE_MY_CODE)
+# target_compile_definitions(${LIB_NAME} PUBLIC USE_LEFT_PERTURBATION)
+# target_compile_definitions(${LIB_NAME} PUBLIC USE_ORIGINAL_CODE)
 target_link_libraries(${LIB_NAME} PUBLIC ${PROJECT_NAME}.common)
 
 set(TARGET_NAME ${DIR_NAME}.run_imu_integration)
