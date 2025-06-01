@@ -10,9 +10,9 @@
 #include <g2o/core/base_unary_edge.h>
 #include <g2o/core/base_vertex.h>
 #include <g2o/core/robust_kernel.h>
-
 #include "ch4/imu_preintegration.h"
 #include "common/eigen_types.h"
+#include "common/g2o_types.h"
 
 namespace sad {
 
@@ -57,6 +57,51 @@ class EdgeInertial : public g2o::BaseMultiEdge<9, Vec9d> {
     const double dt_;
     std::shared_ptr<IMUPreintegration> preint_ = nullptr;
     Vec3d grav_;
+};
+
+// v_wheel = R^T * v
+// d_v_wheel/d_R = SO3::hat(R^T * v)
+// d_v_wheel/d_v = R^T
+class EdgeWheelSpeed : public g2o::BaseBinaryEdge<3, Vec3d, VertexVelocity, VertexPose> {
+   public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EdgeWheelSpeed() = default;
+
+    EdgeWheelSpeed(VertexVelocity* v0, VertexPose* v1, const Vec3d& v_wheel) {
+        setVertex(0, v0);
+        setVertex(1, v1);
+        setMeasurement(v_wheel);
+    }
+
+    void computeError() override {
+        auto v0 = (VertexVelocity*)_vertices[0];
+        auto v1 = (VertexPose*)_vertices[1];
+        const auto& R = v1->estimate().so3();
+        const auto& v = v0->estimate();
+        _error = R.inverse() * v - _measurement;
+    }
+
+    void linearizeOplus() override {
+        auto v0 = (VertexVelocity*)_vertices[0];
+        auto v1 = (VertexPose*)_vertices[1];
+        const auto& R = v1->estimate().so3();
+        const auto& v = v0->estimate();
+        _jacobianOplusXi = R.inverse().matrix();
+        _jacobianOplusXj.setZero();
+        _jacobianOplusXj.block<3, 3>(0, 0) = SO3::hat(R.inverse() * v);
+    }
+
+    // pose + velocity
+    Eigen::Matrix<double, 9, 9> GetHessian() {
+        linearizeOplus();
+        Eigen::Matrix<double, 3, 9> J;
+        J.block<3, 6>(0, 0) = _jacobianOplusXj;
+        J.block<3, 3>(0, 6) = _jacobianOplusXi;
+        return J.transpose() * information() * J;
+    }
+
+    virtual bool read(std::istream& in) { return true; }
+    virtual bool write(std::ostream& out) const { return true; }
 };
 
 }  // namespace sad
