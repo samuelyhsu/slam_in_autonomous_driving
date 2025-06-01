@@ -22,6 +22,9 @@ DEFINE_double(antenna_pox_x, -0.17, "RTK天线安装偏移X");
 DEFINE_double(antenna_pox_y, -0.20, "RTK天线安装偏移Y");
 DEFINE_bool(with_ui, true, "是否显示图形界面");
 DEFINE_bool(debug, false, "是否打印调试信息");
+DEFINE_bool(with_odom, false, "是否加入轮速计信息");
+DEFINE_bool(use_gnss_heading, false, "use gnss heading");
+DEFINE_double(observe_interval, 0, "gnss observe interval in seconds");
 
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, true);
@@ -99,7 +102,7 @@ int main(int argc, char** argv) {
           save_result(fout, state);
           if (ui) {
               ui->UpdateNavState(state);
-              usleep(5e2);
+              //   usleep(5e2);
           }
       })
         .SetGNSSProcessFunc([&](const sad::GNSS& gnss) {
@@ -109,8 +112,17 @@ int main(int argc, char** argv) {
             }
 
             sad::GNSS gnss_convert = gnss;
-            if (!sad::ConvertGps2UTM(gnss_convert, antenna_pos, FLAGS_antenna_angle) || !gnss_convert.heading_valid_) {
+            if (!sad::ConvertGps2UTM(gnss_convert, antenna_pos, FLAGS_antenna_angle)) {
                 return;
+            }
+
+            static double prev_time;
+            if (gnss_convert.unix_time_ - prev_time < FLAGS_observe_interval) {
+                return;
+            }
+            prev_time = gnss_convert.unix_time_;
+            if (!FLAGS_use_gnss_heading) {
+                gnss_convert.heading_valid_ = false;
             }
 
             /// 去掉原点
@@ -126,14 +138,14 @@ int main(int argc, char** argv) {
             save_result(fout, state);
             if (ui) {
                 ui->UpdateNavState(state);
-                usleep(1e3);
+                // usleep(1e3);
             }
             gnss_inited = true;
         })
         .SetOdomProcessFunc([&](const sad::Odom& odom) {
             imu_init.AddOdom(odom);
 
-            if (imu_inited && gnss_inited) {
+            if (FLAGS_with_odom && imu_inited && gnss_inited) {
                 gins.AddOdom(odom);
             }
         })
