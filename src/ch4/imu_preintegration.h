@@ -52,6 +52,8 @@ class IMUPreintegration {
     Vec3d GetDeltaVelocity(const Vec3d &bg, const Vec3d &ba);
     Vec3d GetDeltaPosition(const Vec3d &bg, const Vec3d &ba);
 
+    bool is_valid() const { return dt_ >= 0.009; }
+
    public:
     double dt_ = 0;                          // 整体预积分时间
     Mat9d cov_ = Mat9d::Zero();              // 累计噪声矩阵
