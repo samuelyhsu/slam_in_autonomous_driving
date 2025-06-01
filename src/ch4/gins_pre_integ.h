@@ -100,15 +100,16 @@ class GinsPreInteg {
     std::shared_ptr<IMUPreintegration> pre_integ_ = nullptr;
     std::shared_ptr<NavStated> last_frame_ = nullptr;  // 上一个时刻状态
     std::shared_ptr<NavStated> this_frame_ = nullptr;  // 当前时刻状态
-    Mat15d prior_info_ = Mat15d::Identity() * 1e2;     // 当前时刻先验
-
+    // Mat15d prior_info_ = Mat15d::Identity() * 1e2;     // 当前时刻先验
+    Mat15d prior_info_ = Mat15d::Identity();
     /// 两帧GNSS观测
     GNSS last_gnss_;
     GNSS this_gnss_;
+    bool this_gnss_set_{};
 
     IMU last_imu_;    // 上时刻IMU
-    Odom last_odom_;  // 上时刻odom
-    bool last_odom_set_ = false;
+    Odom this_odom_;  // 上时刻odom
+    bool this_odom_set_ = false;
 
     /// 标志位
     bool first_gnss_received_ = false;  // 是否已收到第一个gnss信号
