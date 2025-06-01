@@ -224,6 +224,37 @@ class EdgeGNSS : public g2o::BaseUnaryEdge<6, SE3, VertexPose> {
    private:
 };
 
+class EdgeGNSSSingle : public g2o::BaseUnaryEdge<3, Vec3d, VertexPose> {
+   public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    EdgeGNSSSingle() = default;
+    EdgeGNSSSingle(VertexPose* v, const Vec3d& obs) {
+        setVertex(0, v);
+        setMeasurement(obs);
+    }
+
+    void computeError() override {
+        VertexPose* v = (VertexPose*)_vertices[0];
+        _error = v->estimate().translation() - _measurement;
+    };
+
+    void linearizeOplus() override {
+        VertexPose* v = (VertexPose*)_vertices[0];
+        _jacobianOplusXi.setZero();
+        _jacobianOplusXi.block<3, 3>(0, 3) = Mat3d::Identity();  // dp/dp
+    }
+
+    Mat6d GetHessian() {
+        linearizeOplus();
+        return _jacobianOplusXi.transpose() * information() * _jacobianOplusXi;
+    }
+
+    virtual bool read(std::istream& in) { return true; }
+    virtual bool write(std::ostream& out) const { return true; }
+
+   private:
+};
+
 /**
  * 只有平移的GNSS
  * 此时需要提供RTK外参 TBG，才能正确施加约束
