@@ -2,7 +2,7 @@
 // Created by xiang on 2021/7/20.
 //
 #include "common/io_utils.h"
-
+#include <chrono>
 #include "spdlog/spdlog.h"
 
 namespace sad {
@@ -12,6 +12,8 @@ void TxtIO::Go() {
         spdlog::error("未能找到文件");
         return;
     }
+
+    auto now = std::chrono::high_resolution_clock::now();
 
     while (!fin.eof()) {
         std::string line;
@@ -48,7 +50,9 @@ void TxtIO::Go() {
         }
     }
 
-    spdlog::info("done.");
+    auto end = std::chrono::high_resolution_clock::now();
+
+    spdlog::info("done, cost {} seconds", std::chrono::duration<double>(end - now).count());
 }
 
 std::string RosbagIO::GetLidarTopicName() const {
