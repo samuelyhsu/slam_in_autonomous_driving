@@ -411,6 +411,211 @@ void Optimize(sad::NavStated& last_state, sad::NavStated& this_state, sad::GNSS&
     spdlog::info("bias: {}/{}", edge_gyro_rw->chi2(), edge_acc_rw->error().transpose());
 }
 
+struct InertialData {
+    double dt;
+    Vec3d gravity;
+    SE3 pi;
+    Vec3d vi;
+    Vec3d bgi;
+    Vec3d bai;
+    SE3 pj;
+    Vec3d vj;
+};
+
+class EdgeInertialNumeric : public sad::EdgeInertial {
+   public:
+    using sad::EdgeInertial::EdgeInertial;
+    // force to use numeric jacobian
+    void linearizeOplus() override { g2o::BaseMultiEdge<9, Vec9d>::linearizeOplus(); }
+};
+
+TEST(PREINTEGRATION_TEST, INERTIAL_JACOBIAN_TEST) {
+    using namespace sad;
+    {
+        // clang-format off
+// edge_inertial: dt=0.10736346244812012, gravity=[0,0,-9.8], p1=[-48.20425923233071,131.09441268357259,-0.17555616143992245,0.0028793839792342945,-0.0024040386346471316,-0.013927729053264157,0.9998959686435196], v1=[   1.06207 -0.0706172  0.0273412], bg1=[-0.000472649   0.00017257   0.00118948], ba1=[-0.0953851  0.0117037  0.0314766], p2=[-48.08847834851701,131.0855464835406,-0.17313973584212922,0.002914867414726511,-0.0029468344350995716,-0.013720745004773289,0.999897275159444], v2=[   1.10102 -0.0844701  0.0218921]
+// edge_inertial: dt=0.10748577117919922, gravity=[0,0,-9.8], p1=[-42.55171724823842,131.54022416603542,-0.24516467957873317,0.002180353159957587,-0.003142283703716957,-0.008012174931582875,0.999960587806384], v1=[   1.30707 0.00924178  0.0133635], bg1=[-0.000462205  0.000182757   0.00114455], ba1=[-0.0945269  0.0113947   0.028877], p2=[-42.410383736111775,131.53984371451153,-0.24500657858788788,0.00272818337405183,-0.0036145062230732395,-0.008044164478200125,0.9999573909812801], v2=[   1.31712 -0.0201331 0.00505722]
+// edge_inertial: dt=0.1089787483215332, gravity=[0,0,-9.8], p1=[27.6904024647889,52.42532709923084,-0.5131977515154368,-0.0018508176696660243,-0.004696131165904422,-0.2250795965667553,0.9743273043671582], v1=[   1.0926 -0.558354 0.0171523], bg1=[-0.000688562  0.000156823   0.00176622], ba1=[ -0.104772 0.00571975  0.0287812], p2=[27.809148629325342,52.364532223849864,-0.5110961726042723,-0.0019540646605160582,-0.004729658462106072,-0.22544471300500388,0.9742425228556931], v2=[  1.08471 -0.558338 0.0145048]
+// edge_inertial: dt=0.10906529426574707, gravity=[0,0,-9.8], p1=[30.435419407775125,49.08906027001082,-0.4845537082062321,-3.691353711578972e-05,-0.006187209252838834,-0.221490574926326,0.9751428830165649], v1=[    0.73211   -0.319747 -0.00359525], bg1=[-0.000701906  0.000157548   0.00200918], ba1=[ -0.104825 0.00685935  0.0301422], p2=[30.51473210644913,49.053988712188094,-0.48420151290728264,-0.0007090746684560713,-0.007232142535000457,-0.21809130187953388,0.9759013153859144], v2=[  0.761843  -0.355137 0.00276586]
+        // clang-format on
+        std::vector<InertialData> inertial_datas;
+        inertial_datas.push_back({0.10736346244812012, Vec3d(0, 0, -9.8),
+                                  SE3(Eigen::Quaternion<double>(0.0028793839792342945, -0.0024040386346471316,
+                                                                -0.013927729053264157, 0.9998959686435196),
+                                      Vec3d(-48.20425923233071, 131.09441268357259, -0.17555616143992245)),
+                                  Vec3d(1.06207, -0.0706172, 0.0273412), Vec3d(-0.000472649, 0.00017257, 0.00118948),
+                                  Vec3d(-0.0953851, 0.0117037, 0.0314766),
+                                  SE3(Eigen::Quaternion<double>(0.002914867414726511, -0.0029468344350995716,
+                                                                -0.013720745004773289, 0.999897275159444),
+                                      Vec3d(-48.08847834851701, 131.0855464835406, -0.17313973584212922)),
+                                  Vec3d(1.10102, -0.0844701, 0.0218921)});
+        inertial_datas.push_back({0.10748577117919922, Vec3d(0, 0, -9.8),
+                                  SE3(Eigen::Quaternion<double>(0.002180353159957587, -0.003142283703716957,
+                                                                -0.008012174931582875, 0.999960587806384),
+                                      Vec3d(-42.55171724823842, 131.54022416603542, -0.24516467957873317)),
+                                  Vec3d(1.30707, 0.00924178, 0.0133635), Vec3d(-0.000462205, 0.000182757, 0.00114455),
+                                  Vec3d(-0.0945269, 0.0113947, 0.028877),
+                                  SE3(Eigen::Quaternion<double>(0.00272818337405183, -0.0036145062230732395,
+                                                                -0.008044164478200125, 0.9999573909812801),
+                                      Vec3d(-42.410383736111775, 131.53984371451153, -0.24500657858788788)),
+                                  Vec3d(1.31712, -0.0201331, 0.00505722)});
+        inertial_datas.push_back({0.1089787483215332, Vec3d(0, 0, -9.8),
+                                  SE3(Eigen::Quaternion<double>(-0.0018508176696660243, -0.004696131165904422,
+                                                                -0.2250795965667553, 0.9743273043671582),
+                                      Vec3d(27.6904024647889, 52.42532709923084, -0.5131977515154368)),
+                                  Vec3d(1.0926, -0.558354, 0.0171523), Vec3d(-0.000688562, 0.000156823, 0.00176622),
+                                  Vec3d(-0.104772, 0.00571975, 0.0287812),
+                                  SE3(Eigen::Quaternion<double>(-0.0019540646605160582, -0.004729658462106072,
+                                                                -0.22544471300500388, 0.9742425228556931),
+                                      Vec3d(27.809148629325342, 52.364532223849864, -0.5110961726042723)),
+                                  Vec3d(1.08471, -0.558338, 0.0145048)});
+        inertial_datas.push_back({0.10906529426574707, Vec3d(0, 0, -9.8),
+                                  SE3(Eigen::Quaternion<double>(-3.691353711578972e-05, -0.006187209252838834,
+                                                                -0.221490574926326, 0.9751428830165649),
+                                      Vec3d(30.435419407775125, 49.08906027001082, -0.4845537082062321)),
+                                  Vec3d(0.73211, -0.319747, -0.00359525), Vec3d(-0.000701906, 0.000157548, 0.00200918),
+                                  Vec3d(-0.104825, 0.00685935, 0.0301422),
+                                  SE3(Eigen::Quaternion<double>(-0.0007090746684560713, -0.007232142535000457,
+                                                                -0.21809130187953388, 0.9759013153859144),
+                                      Vec3d(30.51473210644913, 49.053988712188094, -0.48420151290728264)),
+                                  Vec3d(0.761843, -0.355137, 0.00276586)});
+
+        for (const auto& data : inertial_datas) {
+            using BlockSolverType = g2o::BlockSolverX;
+            using LinearSolverType = g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType>;
+
+            auto imu_pre = std::make_shared<IMUPreintegration>();
+            imu_pre->dt_ = data.dt;
+            auto get_hessian = [&](sad::EdgeInertial* edge_inertial) {
+                auto* solver = new g2o::OptimizationAlgorithmLevenberg(
+                    std::make_unique<BlockSolverType>(std::make_unique<LinearSolverType>()));
+                g2o::SparseOptimizer optimizer;
+                optimizer.setAlgorithm(solver);
+
+                auto vi_p = new VertexPose();
+                vi_p->setId(0);
+                vi_p->setEstimate(data.pi);
+                optimizer.addVertex(vi_p);
+
+                auto vi_v = new VertexVelocity();
+                vi_v->setId(1);
+                vi_v->setEstimate(data.vi);
+                optimizer.addVertex(vi_v);
+
+                auto vi_bg = new VertexGyroBias();
+                vi_bg->setId(2);
+                vi_bg->setEstimate(data.bgi);
+                optimizer.addVertex(vi_bg);
+
+                auto vi_ba = new VertexAccBias();
+                vi_ba->setId(3);
+                vi_ba->setEstimate(data.bai);
+                optimizer.addVertex(vi_ba);
+
+                auto vj_p = new VertexPose();
+                vj_p->setId(4);
+                vj_p->setEstimate(data.pj);
+                optimizer.addVertex(vj_p);
+
+                auto vj_v = new VertexVelocity();
+                vj_v->setId(5);
+                vj_v->setEstimate(data.vj);
+                optimizer.addVertex(vj_v);
+
+                edge_inertial->setInformation(Mat9d::Identity());
+                edge_inertial->setVertex(0, vi_p);
+                edge_inertial->setVertex(1, vi_v);
+                edge_inertial->setVertex(2, vi_bg);
+                edge_inertial->setVertex(3, vi_ba);
+                edge_inertial->setVertex(4, vj_p);
+                edge_inertial->setVertex(5, vj_v);
+                optimizer.addEdge(edge_inertial);
+                optimizer.initializeOptimization();
+                optimizer.optimize(1);
+                return edge_inertial->GetHessian();
+            };
+            auto H_analysis = get_hessian(new sad::EdgeInertial(imu_pre, data.gravity));
+            auto H_numeric = get_hessian(new EdgeInertialNumeric(imu_pre, data.gravity));
+            EXPECT_TRUE(H_analysis.isApprox(H_numeric, 1e-5));
+        }
+    }
+}
+
+struct WheelData {
+    SE3 pj;
+    Vec3d vj;
+};
+
+class EdgeWheelSpeedNumeric : public sad::EdgeWheelSpeed {
+   public:
+    using sad::EdgeWheelSpeed::EdgeWheelSpeed;
+    // force to use numeric jacobian
+    void linearizeOplus() override {
+        g2o::BaseBinaryEdge<3, Vec3d, sad::VertexVelocity, sad::VertexPose>::linearizeOplus();
+    }
+};
+
+TEST(PREINTEGRATION_TEST, WHEEL_JACOBIAN_TEST) {
+    using namespace sad;
+    {
+        // clang-format off
+// edge_wheel: p2=[-121.71375069052047,1.6693158795978535,-0.630749876343679,0.010943148703749324,-0.0057734802704026795,0.08483334000128599,0.9963183320837979], v2=[  1.26815  0.318286 0.0161879]
+// edge_wheel: p2=[-75.79195832238703,25.06890381364548,-0.6090009027177773,0.007936563191486688,-0.00012309451614146724,0.7102719890375541,0.7038825877950702], v2=[-0.00309099     1.20132   0.0188821]
+// edge_wheel: p2=[29.21454427951416,101.08244311950648,-0.3631043579593454,0.006255023556490374,-0.008608298129634226,0.9609693063078633,-0.2764502924899942], v2=[   -1.07971   -0.736306 -0.00938653]
+// edge_wheel: p2=[24.56944983936715,65.2221625478426,-0.5140032012727107,-0.0006136493388138473,0.001149997728963421,-0.6048605013057748,-0.7963303804953314], v2=[   0.296722     1.27953 0.000438097]        // clang-format on
+        std::vector<WheelData> datas;
+        datas.push_back({SE3(Eigen::Quaternion<double>(0.010943148703749324, -0.0057734802704026795,
+                                                       0.08483334000128599, 0.9963183320837979),
+                             Vec3d(-121.71375069052047, 1.6693158795978535, -0.630749876343679)),
+                         Vec3d(1.26815, 0.318286, 0.0161879)});
+        datas.push_back({SE3(Eigen::Quaternion<double>(0.007936563191486688, -0.00012309451614146724,
+                                                       0.7102719890375541, 0.7038825877950702),
+                             Vec3d(-75.79195832238703, 25.06890381364548, -0.6090009027177773)),
+                         Vec3d(-0.00309099, 1.20132, 0.0188821)});
+        datas.push_back({SE3(Eigen::Quaternion<double>(0.006255023556490374, -0.008608298129634226,
+                                                       0.9609693063078633, -0.2764502924899942),
+                             Vec3d(29.21454427951416, 101.08244311950648, -0.3631043579593454)),
+                         Vec3d(-1.07971, -0.736306, -0.00938653)});
+        datas.push_back({SE3(Eigen::Quaternion<double>(-0.0006136493388138473, 0.001149997728963421,
+                                                       -0.6048605013057748, -0.7963303804953314),
+                             Vec3d(24.56944983936715, 65.2221625478426, -0.5140032012727107)),
+                         Vec3d(0.296722, 1.27953, 0.000438097)});
+        for (const auto& data : datas) {
+            using BlockSolverType = g2o::BlockSolverX;
+            using LinearSolverType = g2o::LinearSolverEigen<BlockSolverType::PoseMatrixType>;
+
+
+            auto get_hessian = [&](auto *edge_wheel) {
+                auto* solver = new g2o::OptimizationAlgorithmLevenberg(
+                    std::make_unique<BlockSolverType>(std::make_unique<LinearSolverType>()));
+                g2o::SparseOptimizer optimizer;
+                optimizer.setAlgorithm(solver);
+
+                auto vj_p = new VertexPose();
+                vj_p->setId(0);
+                vj_p->setEstimate(data.pj);
+                optimizer.addVertex(vj_p);
+
+                auto vj_v = new VertexVelocity();
+                vj_v->setId(1);
+                vj_v->setEstimate(data.vj);
+                optimizer.addVertex(vj_v);
+
+                edge_wheel = new std::remove_pointer_t<decltype(edge_wheel)>(vj_v, vj_p,
+                                                          Vec3d(0.0, 0.0, 0.0));
+                edge_wheel->setInformation(Mat3d::Identity());
+                optimizer.addEdge(edge_wheel);
+                optimizer.initializeOptimization();
+                optimizer.optimize(1);
+                return edge_wheel->GetHessian();
+            };
+            auto H_analysis = get_hessian((sad::EdgeWheelSpeed *)nullptr);
+            auto H_numeric = get_hessian((EdgeWheelSpeedNumeric *)nullptr);
+            EXPECT_TRUE(H_analysis.isApprox(H_numeric, 1e-5));
+        }
+    }
+}
+
 int main(int argc, char** argv) {
     testing::InitGoogleTest(&argc, argv);
     google::ParseCommandLineFlags(&argc, &argv, true);
