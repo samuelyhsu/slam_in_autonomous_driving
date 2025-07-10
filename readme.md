@@ -1,3 +1,151 @@
+## SLAM in Autonomous Driving Book (SAD Book)
+
+This book systematically introduces readers to inertial navigation, integrated navigation, LiDAR mapping, LiDAR localization, LiDAR-inertial odometry, and related knowledge. This repository contains the source code accompanying the book and is publicly available for use.
+
+The English translation is almost done and is open-source, check it out here: https://github.com/gaoxiang12/slam-in-ad-en/blob/main/sad-en.pdf 
+
+<img src="https://github.com/gaoxiang12/slam_in_autonomous_driving/assets/6635511/734af25b-d866-4dcf-a155-773190ba03d8" width="300" />
+
+## Notes
+
+- The book began printing on July 10, 2023, and is expected to be available within two weeks. I will update the links to various platforms at that time.
+- August 9, 2023: The book is currently in its second printing, with some content corrections from the first edition (though without signatures). For details, see the code updates.
+- Official page from Electronic Industry Publishing House: https://item.jd.com/10080292102089.html
+- JD.com self-operated store: https://item.jd.com/13797963.html
+
+## Book Content Structure
+
+- Chapter 1: Overview
+- Chapter 2: Review of mathematical fundamentals: geometry, kinematics, KF filter theory, and matrix Lie groups
+- Chapter 3: Error-state Kalman filter, inertial navigation, satellite navigation, and integrated navigation
+- Chapter 4: Pre-integration, graph optimization, and pre-integration-based integrated navigation
+- Chapter 5: Point cloud basics, nearest neighbor structures, and point cloud linear fitting
+- Chapter 6: 2D LiDAR mapping: scan matching, likelihood fields, submaps, 2D loop closure detection, and pose graph
+- Chapter 7: 3D LiDAR mapping: ICP, ICP variants, NDT, NDT LO, Loam-like LO, and loosely-coupled LIO
+- Chapter 8: Tightly-coupled LIO, IESKF, and pre-integration tightly-coupled LIO
+- Chapter 9: Offline mapping: frontend, backend, batch loop closure detection, map optimization, and tile export
+- Chapter 10: Fusion localization: LiDAR localization, initialization search, tile map loading, and EKF fusion
+
+## Features of This Book
+
+- This book likely offers the simplest mathematical derivations and code implementations among similar materials.
+- In this book, you will reproduce many classic algorithms and data structures in LiDAR SLAM:
+  - You will derive and implement an Error-State Kalman Filter (ESKF), feed it IMU and GNSS data, and observe how it estimates its state.
+  - You will also implement a pre-integration system for the same purpose and compare their performance.
+  - Next, you will implement common algorithms in 2D LiDAR SLAM: scan matching, likelihood fields, submaps, occupancy grids, and use loop closure detection to build larger maps—all by yourself.
+  - In LiDAR SLAM, you will implement a K-d tree for approximate nearest neighbor searches, then use it for ICP and point-to-plane ICP, discussing potential improvements.
+  - You will implement the classic NDT algorithm, test its registration performance, and use it to build a LiDAR odometer—much faster than most existing LOs.
+  - You will also implement a point-to-plane ICP LiDAR odometer, which is similarly fast and works similarly to Loam but simpler.
+  - You will integrate IMU into the LiDAR odometer, implementing both loosely-coupled and tightly-coupled LIO systems, including derivations for iterative Kalman filters and pre-integration graph optimization.
+  - You will adapt the system for offline operation to allow thorough loop closure detection, ultimately creating an offline mapping system.
+  - Finally, you will segment the resulting map for real-time localization.
+- Most implementations in this book are significantly simpler than those in comparable libraries, making it easier to understand their workings without dealing with complex interfaces.
+- The book employs convenient concurrent programming, often resulting in more efficient implementations than existing algorithms (partly due to historical reasons).
+- Each chapter includes dynamic demonstrations like these:
+
+![](./doc/lio_demo.gif)
+![](./doc/2dmapping_demo.gif)
+![](./doc/lo_demo.gif)
+
+We hope you enjoy the minimalist style of this book and discover the joy of algorithms.
+
+## Datasets
+
+- Dataset download links:
+  - Baidu Cloud: https://pan.baidu.com/s/1ELOcF1UTKdfiKBAaXnE8sQ?pwd=feky (Extraction code: feky)
+  - OneDrive: https://1drv.ms/u/s!AgNFVSzSYXMahcEZejoUwCaHRcactQ?e=YsOYy2
+
+- Includes the following datasets (total 270GB; download selectively based on storage capacity):
+  - UrbanLoco (ULHK, 3D LiDAR, urban road scenarios)
+  - NCLT (3D LiDAR, RTK, campus scenarios)
+  - WXB (3D LiDAR, campus scenarios)
+  - 2dmapping (2D LiDAR, mall scenarios)
+  - AVIA (DJI solid-state LiDAR)
+  - UTBM (3D LiDAR, road scenarios)
+- Other built-in data:
+  - Chapters 3–4 use text-formatted IMU and RTK data.
+  - Chapter 7 uses some EPFL data for point cloud registration.
+- Store datasets in `./dataset/sad/` for default paths to work. Alternatively, manually specify paths or create symlinks if storage is limited.
+
+## Compilation
+
+- Recommended environment: Ubuntu 20.04. Older versions require GCC adjustments (C++17 support). For newer Ubuntu, install the corresponding ROS version.
+- Prerequisites:
+  - ROS Noetic: http://wiki.ros.org/noetic/Installation/Ubuntu
+  - Additional libraries:
+    ```bash
+    sudo apt install -y ros-noetic-pcl-ros ros-noetic-velodyne-msgs libopencv-dev libgoogle-glog-dev libeigen3-dev libsuitesparse-dev libpcl-dev libyaml-cpp-dev libbtbb-dev libgmock-dev
+    ```
+  - Pangolin: Compile `thirdparty/pangolin.zip` or install from https://github.com/stevenlovegrove/Pangolin
+  - g2o: Compile `thirdparty/g2o` or install from https://github.com/RainerKuemmerle/g2o
+- Build commands:
+  ```bash
+  mkdir build
+  cd build
+  cmake ..
+  make -j8
+  ```
+- Executables are located in the `bin` directory.
+
+### Ubuntu 18.04 Adaptation
+
+For Ubuntu 18.04, install GCC-9 and compatible TBB, or use Docker.
+
+**Install GCC-9:**
+```bash
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+sudo update-alternatives --remove-all gcc
+sudo update-alternatives --remove-all g++
+
+# Priority values (1 and 10); auto-mode defaults to higher priority.
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 1
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 10
+
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 1
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 10
+```
+
+**Check version:**
+```bash
+g++ -v
+```
+
+**Build:**
+```bash
+mkdir build
+cd build
+cmake .. -DBUILD_WITH_UBUNTU1804=ON
+make -j8
+```
+
+**Docker setup:**
+```bash
+docker build -t sad:v1 .
+./docker/docker_run.sh
+```
+Inside the container:
+```bash
+cd ./thirdparty/g2o
+mkdir build
+cd build
+cmake ..
+make -j8
+cd /sad
+mkdir build
+cd build
+cmake ..
+make -j8
+```
+
+## FAQs
+
+1. GUI crashes on certain 2023+ laptop models (GL hardware compatibility): https://github.com/gaoxiang12/slam_in_autonomous_driving/issues/67
+2. Chapter 5 `test_nn` GMock errors during compilation: https://github.com/gaoxiang12/slam_in_autonomous_driving/issues/18
+3. Compiler version issues: https://github.com/gaoxiang12/slam_in_autonomous_driving/issues/4
+4. g2o compilation (`config.h` not found): https://github.com/gaoxiang12/slam_in_autonomous_driving/issues/95
+
+--- 
+
 ## SLAM in Autonomous Driving book (SAD book)
 
 本书向读者系统介绍了惯性导航、组合导航、激光建图、激光定位、激光惯导里程计等知识。本仓库是书籍对应的源代码仓库，可以公开使用。
