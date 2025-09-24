@@ -21,5 +21,6 @@ target_link_libraries(${TARGET_NAME} ${LIB_NAME})
 
 set(TARGET_NAME ${DIR_NAME}.test_nn)
 add_executable(${TARGET_NAME} test_nn.cc)
-target_link_libraries(${TARGET_NAME} GTest::gtest ${LIB_NAME})
+target_link_libraries(${TARGET_NAME} GTest::gtest ${LIB_NAME}
+                      nanoflann::nanoflann)
 add_test(${TARGET_NAME} ${TARGET_NAME})

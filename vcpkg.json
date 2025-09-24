@@ -7,7 +7,8 @@
     "pangolin",
     "yaml-cpp",
     "sophus",
-    "g2o"
+    "g2o",
+    "nanoflann"
   ],
   "builtin-baseline": "ab42fb3032acd29dd12cea7897f85025526a60e6"
 }

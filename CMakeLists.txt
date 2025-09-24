@@ -77,6 +77,9 @@ print_package_info(PCL)
 find_package(OpenCV CONFIG REQUIRED)
 print_package_info(OpenCV)
 
+find_package(nanoflann CONFIG REQUIRED)
+print_package_info(nanoflann)
+
 include_directories(${CMAKE_BINARY_DIR}/devel/include)
 
 find_package(

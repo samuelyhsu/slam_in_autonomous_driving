@@ -115,65 +115,39 @@ TEST(CH5_TEST, GRID_NN) {
     sad::bfnn_cloud(first, second, truth_matches);
 
     // 对比不同种类的grid
-    sad::GridNN<2> grid0(0.1, sad::GridNN<2>::NearbyType::CENTER), grid4(0.1, sad::GridNN<2>::NearbyType::NEARBY4),
-        grid8(0.1, sad::GridNN<2>::NearbyType::NEARBY8);
-    sad::GridNN<3> grid3(0.1, sad::GridNN<3>::NearbyType::NEARBY6);
+    sad::GridNN<2> grid2_0(0.1, sad::GridNN<2>::NearbyType::CENTER);
+    sad::GridNN<2> grid2_4(0.1, sad::GridNN<2>::NearbyType::NEARBY4);
+    sad::GridNN<2> grid2_8(0.1, sad::GridNN<2>::NearbyType::NEARBY8);
+    sad::GridNN<3> grid3_6(0.1, sad::GridNN<3>::NearbyType::NEARBY6);
+    sad::GridNN<3> grid3_14(0.1, sad::GridNN<3>::NearbyType::NEARBY14);
 
-    grid0.SetPointCloud(first);
-    grid4.SetPointCloud(first);
-    grid8.SetPointCloud(first);
-    grid3.SetPointCloud(first);
+    grid2_0.SetPointCloud(first);
+    grid2_4.SetPointCloud(first);
+    grid2_8.SetPointCloud(first);
+    grid3_6.SetPointCloud(first);
+    grid3_14.SetPointCloud(first);
 
     // 评价各种版本的Grid NN
-    // sorry没有C17的template lambda... 下面必须写的啰嗦一些
-    spdlog::info("===================");
-    std::vector<std::pair<size_t, size_t>> matches;
-    sad::evaluate_and_call(
-        [&first, &second, &grid0, &matches]() { grid0.GetClosestPointForCloud(first, second, matches); },
-        "Grid0 单线程", 10);
-    EvaluateMatches(truth_matches, matches);
 
-    spdlog::info("===================");
-    sad::evaluate_and_call(
-        [&first, &second, &grid0, &matches]() { grid0.GetClosestPointForCloudMT(first, second, matches); },
-        "Grid0 多线程", 10);
-    EvaluateMatches(truth_matches, matches);
+    auto evaluate = [&](auto& method, const std::string& name) {
+        spdlog::info("===================");
+        std::vector<std::pair<size_t, size_t>> matches;
+        sad::evaluate_and_call(
+            [&first, &second, &method, &matches]() { method.GetClosestPointForCloud(first, second, matches); }, name,
+            10);
+        EvaluateMatches(truth_matches, matches);
 
-    spdlog::info("===================");
-    sad::evaluate_and_call(
-        [&first, &second, &grid4, &matches]() { grid4.GetClosestPointForCloud(first, second, matches); },
-        "Grid4 单线程", 10);
-    EvaluateMatches(truth_matches, matches);
+        sad::evaluate_and_call(
+            [&first, &second, &method, &matches]() { method.GetClosestPointForCloudMT(first, second, matches); },
+            name + "_mt", 10);
+        EvaluateMatches(truth_matches, matches);
+    };
 
-    spdlog::info("===================");
-    sad::evaluate_and_call(
-        [&first, &second, &grid4, &matches]() { grid4.GetClosestPointForCloudMT(first, second, matches); },
-        "Grid4 多线程", 10);
-    EvaluateMatches(truth_matches, matches);
-
-    spdlog::info("===================");
-    sad::evaluate_and_call(
-        [&first, &second, &grid8, &matches]() { grid8.GetClosestPointForCloud(first, second, matches); },
-        "Grid8 单线程", 10);
-    EvaluateMatches(truth_matches, matches);
-
-    spdlog::info("===================");
-    sad::evaluate_and_call(
-        [&first, &second, &grid8, &matches]() { grid8.GetClosestPointForCloudMT(first, second, matches); },
-        "Grid8 多线程", 10);
-    EvaluateMatches(truth_matches, matches);
-
-    spdlog::info("===================");
-    sad::evaluate_and_call(
-        [&first, &second, &grid3, &matches]() { grid3.GetClosestPointForCloud(first, second, matches); },
-        "Grid 3D 单线程", 10);
-    EvaluateMatches(truth_matches, matches);
-
-    spdlog::info("===================");
-    sad::evaluate_and_call(
-        [&first, &second, &grid3, &matches]() { grid3.GetClosestPointForCloudMT(first, second, matches); },
-        "Grid 3D 多线程", 10);
-    EvaluateMatches(truth_matches, matches);
+    evaluate(grid2_0, "grid2_0");
+    evaluate(grid2_4, "grid2_4");
+    evaluate(grid2_8, "grid2_8");
+    evaluate(grid3_6, "grid3_6");
+    evaluate(grid3_14, "grid3_14");
 
     SUCCEED();
 }
@@ -207,6 +181,110 @@ TEST(CH5_TEST, KDTREE_BASICS) {
     kdtree.PrintAll();
 
     SUCCEED();
+}
+
+#include <nanoflann.hpp>
+
+template <typename T>
+struct PointCloud_NanoFlann {
+    struct Point {
+        T x, y, z;
+    };
+    using coord_t = T;  //!< The type of each coordinate
+    std::vector<Point> pts;
+    inline size_t kdtree_get_point_count() const { return pts.size(); }
+    inline T kdtree_get_pt(const size_t idx, const size_t dim) const {
+        if (dim == 0) return pts[idx].x;
+        else if (dim == 1)
+            return pts[idx].y;
+        else
+            return pts[idx].z;
+    }
+    template <class BBOX>
+    bool kdtree_get_bbox(BBOX& /* bb */) const {
+        return false;
+    }
+};
+
+using kdtree_nano =
+    nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<float, PointCloud_NanoFlann<float>>,
+                                        PointCloud_NanoFlann<float>, 3>;
+
+void BuildNanoFlannTree(const sad::CloudPtr& cloud, std::unique_ptr<kdtree_nano>& tree,
+                        PointCloud_NanoFlann<float>& cloud_flann) {
+    cloud_flann.pts.resize(cloud->points.size());
+    for (size_t i = 0; i < cloud->points.size(); i++) {
+        cloud_flann.pts[i].x = cloud->points[i].x;
+        cloud_flann.pts[i].y = cloud->points[i].y;
+        cloud_flann.pts[i].z = cloud->points[i].z;
+    }
+    tree = std::make_unique<kdtree_nano>(3, cloud_flann, nanoflann::KDTreeSingleIndexAdaptorParams(10));
+    tree->buildIndex();
+}
+
+template <bool USE_FIND_NEIGHBORS>
+void NanoFlannKnnSearch(const sad::CloudPtr& query_cloud, kdtree_nano* tree, int k,
+                        std::vector<std::pair<size_t, size_t>>& matches) {
+    matches.clear();
+    std::vector<int> indices(query_cloud->size());
+    for (size_t i = 0; i < query_cloud->points.size(); ++i) indices[i] = i;
+    using IndexType = std::conditional_t<USE_FIND_NEIGHBORS, size_t, uint32_t>;
+    std::vector<std::vector<IndexType>> ret_index_all(query_cloud->size());
+    std::vector<std::vector<float>> out_dist_sqr_all(query_cloud->size());
+    std::for_each(
+        std::execution::par_unseq, indices.begin(), indices.end(),
+        [&query_cloud, tree, k, &ret_index_all, &out_dist_sqr_all](int idx) {
+            IndexType ret_index[k];
+            float out_dist_sqr[k];
+            float query_p[3] = {query_cloud->points[idx].x, query_cloud->points[idx].y, query_cloud->points[idx].z};
+            if constexpr (USE_FIND_NEIGHBORS) {
+                nanoflann::KNNResultSet<float> resultSet(k);
+                resultSet.init(ret_index, out_dist_sqr);
+                tree->findNeighbors(resultSet, query_p);
+            } else {
+                tree->knnSearch(&query_p[0], k, ret_index, out_dist_sqr);
+            }
+            ret_index_all[idx] = std::vector<IndexType>(ret_index, ret_index + k);
+            out_dist_sqr_all[idx] = std::vector<float>(out_dist_sqr, out_dist_sqr + k);
+        });
+    for (size_t i = 0; i < query_cloud->points.size(); i++) {
+        for (size_t j = 0; j < ret_index_all[i].size(); ++j) {
+            matches.push_back({ret_index_all[i][j], i});
+        }
+    }
+}
+
+void test_nanoflann(sad::CloudPtr& first, sad::CloudPtr& second,
+                    const std::vector<std::pair<size_t, size_t>>& true_matches) {
+    using kdtree_nano =
+        nanoflann::KDTreeSingleIndexAdaptor<nanoflann::L2_Simple_Adaptor<float, PointCloud_NanoFlann<float>>,
+                                            PointCloud_NanoFlann<float>, 3>;
+    spdlog::info("building kdtree nanflann");
+    std::unique_ptr<kdtree_nano> my_kdtree_nano;
+    PointCloud_NanoFlann<float> first_cloud_flann;
+    sad::evaluate_and_call([&first, &my_kdtree_nano,
+                            &first_cloud_flann]() { BuildNanoFlannTree(first, my_kdtree_nano, first_cloud_flann); },
+                           "Kd Tree build nanflann", 1);
+    spdlog::info("searching nanflann");
+    std::vector<std::pair<size_t, size_t>> matches;
+    int k = 5;
+    sad::evaluate_and_call([&second, &my_kdtree_nano, &matches,
+                            &k]() { NanoFlannKnnSearch<false>(second, my_kdtree_nano.get(), k, matches); },
+                           "Kd Tree 5NN nanflann::knnSearch", 1);
+    EvaluateMatches(true_matches, matches);
+    my_kdtree_nano.reset();
+
+    spdlog::info("building kdtree nanflann 2");
+    std::unique_ptr<kdtree_nano> my_kdtree_nano2;
+    sad::evaluate_and_call([&first, &my_kdtree_nano2,
+                            &first_cloud_flann]() { BuildNanoFlannTree(first, my_kdtree_nano2, first_cloud_flann); },
+                           "nanflann Kd Tree build nanflann", 1);
+    spdlog::info("searching nanflann 2");
+    sad::evaluate_and_call([&second, &my_kdtree_nano2, &matches,
+                            &k]() { NanoFlannKnnSearch<true>(second, my_kdtree_nano2.get(), k, matches); },
+                           "Kd Tree 5NN nanflann::findNeighbors", 1);
+    EvaluateMatches(true_matches, matches);
+    my_kdtree_nano2.reset();
 }
 
 TEST(CH5_TEST, KDTREE_KNN) {
@@ -267,6 +345,7 @@ TEST(CH5_TEST, KDTREE_KNN) {
     }
     EvaluateMatches(true_matches, matches);
 
+    test_nanoflann(first, second, true_matches);
     spdlog::info("done.");
 
     SUCCEED();
