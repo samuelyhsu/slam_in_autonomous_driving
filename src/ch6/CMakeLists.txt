@@ -1,5 +1,7 @@
+get_filename_component(DIR_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+set(LIB_NAME ${PROJECT_NAME}.${DIR_NAME})
 add_library(
-  ${PROJECT_NAME}.ch6
+  ${LIB_NAME}
   icp_2d.cc
   lidar_2d_utils.cc
   likelihood_field.cc
@@ -9,29 +11,17 @@ add_library(
   multi_resolution_likelihood_field.cc
   loop_closing.cc
   frame.cc)
+target_link_libraries(${LIB_NAME} PUBLIC ${PROJECT_NAME}.common)
 
-target_link_libraries(${PROJECT_NAME}.ch6 PUBLIC ${PROJECT_NAME}.common)
+function(add_exec src_name)
+  set(TARGET_NAME ${DIR_NAME}.${src_name})
+  add_executable(${TARGET_NAME} ${src_name}.cc)
+  target_link_libraries(${TARGET_NAME} ${LIB_NAME})
+endfunction()
 
-add_executable(test_2dlidar_io test_2dlidar_io.cc)
-
-target_link_libraries(test_2dlidar_io ${PROJECT_NAME}.ch6)
-
-add_executable(test_2d_icp_s2s test_2d_icp_s2s.cc)
-
-target_link_libraries(test_2d_icp_s2s ${PROJECT_NAME}.ch6)
-
-add_executable(test_2d_icp_likelihood test_2d_icp_likelihood.cc)
-
-target_link_libraries(test_2d_icp_likelihood ${PROJECT_NAME}.ch6)
-
-add_executable(test_occupancy_grid test_occupancy_grid.cc)
-
-target_link_libraries(test_occupancy_grid ${PROJECT_NAME}.ch6)
-
-add_executable(test_2d_mapping test_2d_mapping.cc)
-
-target_link_libraries(test_2d_mapping ${PROJECT_NAME}.ch6)
-
-add_executable(test_mr_matching test_mr_matching.cc)
-
-target_link_libraries(test_mr_matching ${PROJECT_NAME}.ch6)
+add_exec(test_2dlidar_io)
+add_exec(test_2d_icp_s2s)
+add_exec(test_2d_icp_likelihood)
+add_exec(test_occupancy_grid)
+add_exec(test_2d_mapping)
+add_exec(test_mr_matching)
