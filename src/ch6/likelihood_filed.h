@@ -6,6 +6,7 @@
 #define SLAM_IN_AUTO_DRIVING_LIKELIHOOD_FILED_H
 
 #include <opencv2/core.hpp>
+#include <vector>
 
 #include "common/eigen_types.h"
 #include "common/lidar_utils.h"
@@ -22,7 +23,7 @@ class LikelihoodField {
         float residual_ = 0;
     };
 
-    LikelihoodField() { BuildModel(); }
+    LikelihoodField();
 
     /// 增加一个2D的目标scan
     void SetTargetScan(Scan2d::Ptr scan);
@@ -50,8 +51,11 @@ class LikelihoodField {
 
     void SetPose(const SE2& pose) { pose_ = pose; }
 
+    float get_cost() const { return cost_; }
+
    private:
     void BuildModel();
+    void build_field();
 
     SE2 pose_;  // T_W_S
     Scan2d::Ptr target_ = nullptr;
@@ -61,8 +65,24 @@ class LikelihoodField {
     cv::Mat field_;                  // 场函数
     bool has_outside_pts_ = false;   // 是否含有出了这个场的点
 
+    // 多层金字塔配置
+    std::vector<float> resolutions_;
+    float current_resolution_;  // 当前层像素/米
+
+    // 可选：占据栅格缓存，以便多层重建
+    cv::Mat occu_map_cache_;
+    bool use_occu_map_ = false;
+
+    // 以米为单位的图像边界（用于梯度的有效像素区），各层按分辨率换算为像素
+    float border_m_ = 1.0f;
+
+    // 梯度幅值阈值（像素梯度单位），低于此阈值的点视为无信息
+    float grad_eps_ = 1e-3f;
+
     // 参数配置
-    inline static const float resolution_ = 20;  // 每米多少个像素
+    // inline static const float resolution_ = 20;  // 移除：由 current_resolution_ 取代
+
+    float cost_;
 };
 
 }  // namespace sad

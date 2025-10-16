@@ -9,8 +9,9 @@
 #include "ch6/likelihood_filed.h"
 #include "common/io_utils.h"
 
-DEFINE_string(bag_path, "./dataset/sad/2dmapping/floor1.bag", "数据包路径");
+DEFINE_string(bag_path, "./dataset/sad/2dmapping/floor3.bag", "数据包路径");
 DEFINE_string(method, "gauss-newton", "gauss-newton/g2o");
+DEFINE_int32(sample_interval, 1, "采样间隔");
 
 /// 测试2D似然场法的ICP
 
@@ -24,6 +25,11 @@ int main(int argc, char** argv) {
     rosbag_io
         .AddScan2DHandle("/pavo_scan_bottom",
                          [&](Scan2d::Ptr scan) {
+                             static int cnt = 0;
+                             if (++cnt % FLAGS_sample_interval != 0) {
+                                 return true;
+                             }
+
                              sad::LikelihoodField lf;
                              current_scan = scan;
                              SE2 pose;
@@ -42,6 +48,8 @@ int main(int argc, char** argv) {
                                  lf.AlignG2O(pose);
                              }
 
+                             spdlog::info("cnt={}, pose={}, cost={}", cnt, pose.log().transpose(), lf.get_cost());
+
                              cv::Mat image;
                              sad::Visualize2DScan(last_scan, SE2(), image, Vec3b(255, 0, 0));    // target是蓝的
                              sad::Visualize2DScan(current_scan, pose, image, Vec3b(0, 0, 255));  // source是红的
@@ -52,7 +60,7 @@ int main(int argc, char** argv) {
                              sad::Visualize2DScan(last_scan, SE2(), field_image, Vec3b(255, 0, 0), 1000,
                                                   20.0);  // target是蓝的
                              cv::imshow("field", field_image);
-                             cv::waitKey(10);
+                             cv::waitKey(10 * FLAGS_sample_interval);
 
                              last_scan = current_scan;
                              return true;
