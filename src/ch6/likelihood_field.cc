@@ -114,13 +114,13 @@ bool LikelihoodField::AlignGaussNewton(SE2& init_pose) {
                 Vec2d pw = current_pose * Vec2d(r * std::cos(angle), r * std::sin(angle));
 
                 // 在field中的图像坐标（以图像中心为偏移）
-                Vec2i pf = (pw * current_resolution_ + center).cast<int>();
-
+                Vec2d pf = pw * current_resolution_ + center;
                 if (pf[0] >= image_boarder && pf[0] < field_.cols - image_boarder && pf[1] >= image_boarder &&
                     pf[1] < field_.rows - image_boarder) {
-                    // 图像梯度（对像素），残差单位为米
-                    float dx = 0.5f * (field_.at<float>(pf[1], pf[0] + 1) - field_.at<float>(pf[1], pf[0] - 1));
-                    float dy = 0.5f * (field_.at<float>(pf[1] + 1, pf[0]) - field_.at<float>(pf[1] - 1, pf[0]));
+                    float dx = 0.5 * (math::GetPixelValue<float>(field_, pf[0] + 1, pf[1]) -
+                                      math::GetPixelValue<float>(field_, pf[0] - 1, pf[1]));
+                    float dy = 0.5 * (math::GetPixelValue<float>(field_, pf[0], pf[1] + 1) -
+                                      math::GetPixelValue<float>(field_, pf[0], pf[1] - 1));
 
                     // 仅使用有信息的点
                     // if (dx * dx + dy * dy < grad_eps_ * grad_eps_) {
