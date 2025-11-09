@@ -66,19 +66,30 @@ bool Icp3d::AlignP2P(SE3& init_pose) {
         // 原则上可以用reduce并发，写起来比较麻烦，这里写成accumulate
         double total_res = 0;
         int effective_num = 0;
-        auto H_and_err = std::accumulate(
-            index.begin(), index.end(), std::pair<Mat6d, Vec6d>(Mat6d::Zero(), Vec6d::Zero()),
-            [&jacobians, &errors, &effect_pts, &total_res, &effective_num](const std::pair<Mat6d, Vec6d>& pre,
-                                                                           int idx) -> std::pair<Mat6d, Vec6d> {
-                if (!effect_pts[idx]) {
-                    return pre;
-                } else {
-                    total_res += errors[idx].dot(errors[idx]);
-                    effective_num++;
-                    return std::pair<Mat6d, Vec6d>(pre.first + jacobians[idx].transpose() * jacobians[idx],
-                                                   pre.second - jacobians[idx].transpose() * errors[idx]);
-                }
-            });
+        auto H_and_err =
+            std::accumulate(index.begin(), index.end(), std::pair<Mat6d, Vec6d>(Mat6d::Zero(), Vec6d::Zero()),
+                            [&jacobians, &errors, &effect_pts, &total_res, &effective_num](
+                                const std::pair<Mat6d, Vec6d>& pre, int idx) -> std::pair<Mat6d, Vec6d> {
+                                if (!effect_pts[idx]) {
+                                    return pre;
+                                } else {
+                                    auto e2 = errors[idx].dot(errors[idx]);
+                                    total_res += e2;
+                                    effective_num++;
+                                    double w;
+                                    {
+                                        double delta = 1.0;
+                                        double delta2 = delta * delta;
+                                        double delta2_inv = 1.0 / delta2;
+                                        double aux = delta2_inv * e2 + 1.0;
+                                        w = 1.0 / aux;
+                                    }
+                                    Mat3d weighted_infos = w * Mat3d::Identity();
+                                    return std::pair<Mat6d, Vec6d>(
+                                        pre.first + jacobians[idx].transpose() * weighted_infos * jacobians[idx],
+                                        pre.second - w * jacobians[idx].transpose() * errors[idx]);
+                                }
+                            });
 
         if (effective_num < options_.min_effective_pts_) {
             spdlog::warn("effective num too small: {}", effective_num);
@@ -185,10 +196,19 @@ bool Icp3d::AlignP2Plane(SE3& init_pose) {
                 if (!effect_pts[idx]) {
                     return pre;
                 } else {
-                    total_res += errors[idx] * errors[idx];
+                    auto e2 = errors[idx] * errors[idx];
+                    total_res += e2;
                     effective_num++;
-                    return std::pair<Mat6d, Vec6d>(pre.first + jacobians[idx].transpose() * jacobians[idx],
-                                                   pre.second - jacobians[idx].transpose() * errors[idx]);
+                    double w;
+                    {
+                        double delta = 1.0;
+                        double delta2 = delta * delta;
+                        double delta2_inv = 1.0 / delta2;
+                        double aux = delta2_inv * e2 + 1.0;
+                        w = 1.0 / aux;
+                    }
+                    return std::pair<Mat6d, Vec6d>(pre.first + w * jacobians[idx].transpose() * jacobians[idx],
+                                                   pre.second - w * jacobians[idx].transpose() * errors[idx]);
                 }
             });
 
@@ -298,19 +318,30 @@ bool Icp3d::AlignP2Line(SE3& init_pose) {
         // 原则上可以用reduce并发，写起来比较麻烦，这里写成accumulate
         double total_res = 0;
         int effective_num = 0;
-        auto H_and_err = std::accumulate(
-            index.begin(), index.end(), std::pair<Mat6d, Vec6d>(Mat6d::Zero(), Vec6d::Zero()),
-            [&jacobians, &errors, &effect_pts, &total_res, &effective_num](const std::pair<Mat6d, Vec6d>& pre,
-                                                                           int idx) -> std::pair<Mat6d, Vec6d> {
-                if (!effect_pts[idx]) {
-                    return pre;
-                } else {
-                    total_res += errors[idx].dot(errors[idx]);
-                    effective_num++;
-                    return std::pair<Mat6d, Vec6d>(pre.first + jacobians[idx].transpose() * jacobians[idx],
-                                                   pre.second - jacobians[idx].transpose() * errors[idx]);
-                }
-            });
+        auto H_and_err =
+            std::accumulate(index.begin(), index.end(), std::pair<Mat6d, Vec6d>(Mat6d::Zero(), Vec6d::Zero()),
+                            [&jacobians, &errors, &effect_pts, &total_res, &effective_num](
+                                const std::pair<Mat6d, Vec6d>& pre, int idx) -> std::pair<Mat6d, Vec6d> {
+                                if (!effect_pts[idx]) {
+                                    return pre;
+                                } else {
+                                    auto e2 = errors[idx].dot(errors[idx]);
+                                    total_res += e2;
+                                    effective_num++;
+                                    double w;
+                                    {
+                                        double delta = 1.0;
+                                        double delta2 = delta * delta;
+                                        double delta2_inv = 1.0 / delta2;
+                                        double aux = delta2_inv * e2 + 1.0;
+                                        w = 1.0 / aux;
+                                    }
+                                    Mat3d weighted_infos = w * Mat3d::Identity();
+                                    return std::pair<Mat6d, Vec6d>(
+                                        pre.first + jacobians[idx].transpose() * weighted_infos * jacobians[idx],
+                                        pre.second - w * jacobians[idx].transpose() * errors[idx]);
+                                }
+                            });
 
         if (effective_num < options_.min_effective_pts_) {
             spdlog::warn("effective num too small: {}", effective_num);

@@ -186,11 +186,22 @@ bool IncNdt3d::AlignNdt(SE3& init_pose) {
                 continue;
             }
 
-            total_res += errors[idx].transpose() * infos[idx] * errors[idx];
+            double e2 = errors[idx].transpose() * infos[idx] * errors[idx];
+            total_res += e2;
             effective_num++;
 
-            H += jacobians[idx].transpose() * infos[idx] * jacobians[idx];
-            err += -jacobians[idx].transpose() * infos[idx] * errors[idx];
+            double w;
+            {
+                double delta = 2.3849;
+                double delta2 = delta * delta;
+                double delta2_inv = 1.0 / delta2;
+                double aux = delta2_inv * e2 + 1.0;
+                w = 1.0 / aux;
+            }
+            Mat3d weighted_infos = w * infos[idx];
+
+            H += jacobians[idx].transpose() * weighted_infos * jacobians[idx];
+            err += -jacobians[idx].transpose() * weighted_infos * errors[idx];
         }
 
         if (effective_num < options_.min_effective_pts_) {
