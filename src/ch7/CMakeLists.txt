@@ -2,12 +2,14 @@ get_filename_component(DIR_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
 set(LIB_NAME ${PROJECT_NAME}.${DIR_NAME})
 add_library(
   ${LIB_NAME}
+  ikd_tree/ikd_tree.cpp
   icp_3d.cc
+  icp_inc.cpp
   ndt_3d.cc
+  ndt_inc.cc
   gen_simu_data.cc
   direct_ndt_lo.cc
   incremental_ndt_lo.cc
-  ndt_inc.cc
   loam-like/feature_extraction.cc
   loam-like/loam_like_odom.cc
   loosely_coupled_lio/loosely_lio.cc
