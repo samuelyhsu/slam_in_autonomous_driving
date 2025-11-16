@@ -7,11 +7,11 @@
 
 /// 部分类直接使用ch7的结果
 #include "ch3/static_imu_init.h"
+#include "ch7/icp_inc.hpp"
 #include "ch7/loosely_coupled_lio/cloud_convert.h"
 #include "ch7/loosely_coupled_lio/measure_sync.h"
 #include "ch7/ndt_inc.h"
 #include "ch8/lio-iekf/iekf.hpp"
-
 #include "tools/ui/pangolin_window.h"
 
 namespace sad {
@@ -22,6 +22,7 @@ class LioIEKF {
 
     struct Options {
         Options() {}
+        bool use_ndt_ = true;                        // false to use icp_inc
         bool save_motion_undistortion_pcd_ = false;  // 是否保存去畸变前后的点云
         bool with_ui_ = true;                        // 是否带着UI
     };
@@ -67,6 +68,8 @@ class LioIEKF {
     /// 执行一次配准和观测
     void Align();
 
+    void AlignICP();
+
     /// modules
     std::shared_ptr<MessageSync> sync_ = nullptr;
     StaticIMUInit imu_init_;
@@ -78,6 +81,8 @@ class LioIEKF {
     /// NDT数据
     IncNdt3d ndt_;
     SE3 last_pose_;
+
+    IncIcp3d icp_;
 
     // flags
     bool imu_need_init_ = true;

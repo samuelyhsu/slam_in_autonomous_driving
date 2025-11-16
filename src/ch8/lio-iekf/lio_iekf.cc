@@ -57,7 +57,11 @@ void LioIEKF::ProcessMeasurements(const MeasureGroup &meas) {
     Undistort();
 
     // 配准
-    Align();
+    if (options_.use_ndt_) {
+        Align();
+    } else {
+        AlignICP();
+    }
 }
 
 bool LioIEKF::LoadFromYAML(const std::string &yaml_file) {
@@ -118,6 +122,65 @@ void LioIEKF::Align() {
         CloudPtr current_scan_world(new PointCloudType);
         pcl::transformPointCloud(*current_scan_filter, *current_scan_world, current_pose.matrix());
         ndt_.AddCloud(current_scan_world);
+        last_pose_ = current_pose;
+    }
+
+    // 放入UI
+    if (ui_) {
+        ui_->UpdateScan(current_scan_, current_nav_state.GetSE3());  // 转成Lidar Pose传给UI
+        ui_->UpdateNavState(current_nav_state);
+    }
+
+    frame_num_++;
+    return;
+}
+
+void LioIEKF::AlignICP() {
+    FullCloudPtr scan_undistort_trans(new FullPointCloudType);
+    pcl::transformPointCloud(*scan_undistort_, *scan_undistort_trans, TIL_.matrix().cast<float>());
+    scan_undistort_ = scan_undistort_trans;
+
+    current_scan_ = ConvertToCloud<FullPointType>(scan_undistort_);
+
+    // 点云降采样
+    pcl::VoxelGrid<PointType> voxel;
+    voxel.setLeafSize(0.5, 0.5, 0.5);
+    voxel.setInputCloud(current_scan_);
+    CloudPtr current_scan_down(new PointCloudType);
+    voxel.filter(*current_scan_down);  // 体素滤波，降采样
+
+    /// the first scan
+    if (flg_first_scan_) {
+        // ndt_.AddCloud(current_scan_);
+        icp_.SetTarget(current_scan_);  // 【新增】
+        flg_first_scan_ = false;
+        return;
+    }
+
+    // 后续的scan，使用NDT配合pose进行更新
+    spdlog::info("=== frame {}", frame_num_);
+
+    int cur_pts = current_scan_down->size();  // 降采样后的去畸变点云数量
+
+    // ndt_.SetSource(scan_down_body_);
+    icp_.SetSource(current_scan_down);  // 【新增】为点面icp中的ikdtree设置原始点云
+    ieskf_.UpdateUsingCustomObserve([this](const SE3 &input_pose, Mat18d &HTVH, Vec18d &HTVr) {
+        // ndt_.ComputeResidualAndJacobians(input_pose, HTVH, HTVr);
+        icp_.ComputeResidualAndJacobians(input_pose, HTVH, HTVr);  // 【新增】计算点面残差和雅可比
+    });
+
+    auto current_nav_state = ieskf_.GetNominalState();
+
+    // 若运动了一定范围，则把点云放入地图中
+    SE3 current_pose = ieskf_.GetNominalSE3();
+    SE3 delta_pose = last_pose_.inverse() * current_pose;
+
+    if (delta_pose.translation().norm() > 1.0 || delta_pose.so3().log().norm() > math::deg2rad(10.0)) {
+        // 将地图合入NDT中
+        CloudPtr scan_world(new PointCloudType);
+        pcl::transformPointCloud(*current_scan_down, *scan_world, current_pose.matrix());
+        // ndt_.AddCloud(scan_down_world_2);
+        icp_.SetTarget(scan_world);  // 【新增】为点面icp中的ikdtree设置目标点云，内部际是添加新的点云到ikdtree中
         last_pose_ = current_pose;
     }
 

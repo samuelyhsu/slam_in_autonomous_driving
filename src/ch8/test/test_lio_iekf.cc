@@ -14,13 +14,16 @@ DEFINE_string(bag_path, "./dataset/sad/nclt/20120115.bag", "path to rosbag");
 DEFINE_string(dataset_type, "NCLT", "NCLT/ULHK/UTBM/AVIA");                   // 数据集类型
 DEFINE_string(config, "./config/velodyne_nclt.yaml", "path of config yaml");  // 配置文件类型
 DEFINE_bool(display_map, true, "display map?");
+DEFINE_bool(use_ndt, true, "use NDT for mapping? Set false to use ICP");
 
 int main(int argc, char** argv) {
     google::ParseCommandLineFlags(&argc, &argv, true);
 
     sad::RosbagIO rosbag_io(fLS::FLAGS_bag_path, sad::Str2DatasetType(FLAGS_dataset_type));
 
-    sad::LioIEKF lio;
+    sad::LioIEKF::Options options;
+    options.use_ndt_ = FLAGS_use_ndt;
+    sad::LioIEKF lio(options);
     lio.Init(FLAGS_config);
 
     rosbag_io
