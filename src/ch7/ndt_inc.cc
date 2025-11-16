@@ -70,6 +70,7 @@ void IncNdt3d::UpdateVoxel(VoxelData& v) {
     }
 
     if (v.ndt_estimated_ && v.num_pts_ > options_.max_pts_in_voxel_) {
+        v.pts_.clear();
         return;
     }
 
