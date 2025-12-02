@@ -15,6 +15,7 @@
 
 #include "ch7/loosely_coupled_lio/cloud_convert.h"
 #include "ch7/loosely_coupled_lio/measure_sync.h"
+#include "ch7/ndt_3d.h"
 
 #include "tools/ui/pangolin_window.h"
 
@@ -114,13 +115,26 @@ class Fusion {
     /// 激光定位
     bool imu_need_init_ = true;     // 是否需要估计IMU初始零偏
     CloudPtr ref_cloud_ = nullptr;  // NDT用于参考的点云
-    pcl::NormalDistributionsTransform<PointType, PointType> ndt_;
+    pcl::NormalDistributionsTransform<PointType, PointType> ndt_pcl_;
+    Ndt3d ndt_;
 
     /// 参数
-    double rtk_search_min_score_ = 4.5;
+    double rtk_search_min_score_;
+
+    bool use_pcl_ndt_;
 
     // ui
     std::shared_ptr<ui::PangolinWindow> ui_ = nullptr;
+
+    // 下面为自定义ndt多分辨率相关对象
+    static constexpr auto RESOLUTION_COUNT = 4;
+    std::string data_dir_;
+    std::vector<double> ndt_resolutions_{10, 5, 2, 1};
+    std::vector<std::set<Vec2i, less_vec<2>>> ndt_sub_map_indexes_{RESOLUTION_COUNT};
+    using NdtMap = std::unordered_map<Ndt3d::KeyType, Ndt3d::VoxelData, hash_vec<3>>;
+    std::vector<std::map<Vec2i, NdtMap, less_vec<2>>> ndt_surround_sub_maps_{RESOLUTION_COUNT};
+    // ndt_surround_sub_maps_合并后形成的子地图
+    std::vector<NdtMap> ndt_surround_merged_map_{RESOLUTION_COUNT};
 };
 
 }  // namespace sad
