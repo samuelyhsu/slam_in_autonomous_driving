@@ -35,9 +35,9 @@ def PlotPath(keyframes):
     p2, = plt.plot(keyframes[:, 19], keyframes[:, 20], 'b-')
 
     # opti2
-    # p3, = plt.plot(keyframes[:, 26], keyframes[:, 27], 'r-')
-    # plt.legend(['Lidar', 'RTK', 'Opti1', 'Opti2'])
-    plt.legend(['Lidar', 'RTK', 'Opti1'])
+    p3, = plt.plot(keyframes[:, 26], keyframes[:, 27], 'r-')
+    plt.legend(['Lidar', 'RTK', 'Opti1', 'Opti2'])
+    # plt.legend(['Lidar', 'RTK', 'Opti1'])
 
     plt.show()
 
@@ -54,5 +54,3 @@ if __name__ == '__main__':
     else:
         path = sys.argv[1]
         LoadMappingTxt(path)
-        exit(1)
-        exit(1)
