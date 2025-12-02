@@ -54,6 +54,17 @@ class Ndt3d {
         GenerateNearbyGrids();
     }
 
+    void SetResolution(double r) {
+        options_.voxel_size_ = r;
+        options_.inv_voxel_size_ = 1.0 / r;
+    }
+
+    // 直接加载外部处理好的ndt栅格数据
+    void SetTarget(double resolution, const std::unordered_map<KeyType, VoxelData, hash_vec<3>>& grids) {
+        SetResolution(resolution);
+        grids_ = grids;
+    }
+
     /// 设置目标的Scan
     void SetTarget(CloudPtr target) {
         target_ = target;
@@ -82,6 +93,8 @@ class Ndt3d {
     /// 使用gauss-newton方法进行ndt配准
     bool AlignNdt(SE3& init_pose);
 
+    double GetScore() const { return ndt_score_; }
+
    private:
     void BuildVoxels();
 
@@ -101,6 +114,7 @@ class Ndt3d {
 
     std::unordered_map<KeyType, VoxelData, hash_vec<3>> grids_;  // 栅格数据
     std::vector<KeyType> nearby_grids_;                          // 附近的栅格
+    double ndt_score_;
 };
 
 }  // namespace sad

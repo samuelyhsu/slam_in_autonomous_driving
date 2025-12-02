@@ -67,7 +67,7 @@ void Ndt3d::BuildVoxels() {
 }
 
 bool Ndt3d::AlignNdt(SE3& init_pose) {
-    spdlog::info("aligning with ndt");
+    // spdlog::info("aligning with ndt");
     assert(grids_.empty() == false);
 
     SE3 pose = init_pose;
@@ -140,6 +140,8 @@ bool Ndt3d::AlignNdt(SE3& init_pose) {
         double total_res = 0;
         int effective_num = 0;
 
+        double score = 0;
+
         Mat6d H = Mat6d::Zero();
         Vec6d err = Vec6d::Zero();
 
@@ -164,7 +166,11 @@ bool Ndt3d::AlignNdt(SE3& init_pose) {
 
             H += jacobians[idx].transpose() * weighted_infos * jacobians[idx];
             err += -jacobians[idx].transpose() * weighted_infos * errors[idx];
+
+            score += std::exp(-0.5 * e2);
         }
+
+        ndt_score_ = score / index.size();
 
         if (effective_num < options_.min_effective_pts_) {
             spdlog::warn("effective num too small: {}", effective_num);
@@ -178,8 +184,8 @@ bool Ndt3d::AlignNdt(SE3& init_pose) {
         // 更新
         //              << ", mean res: " << total_res / effective_num << ", dxn: " << dx.norm()
         //              << ", dx: " << dx.transpose();
-        spdlog::info("iter {} total res: {}, eff: {}, mean res: {}, dxn: {}, dx: {}", iter, total_res, effective_num,
-                     total_res / effective_num, dx.norm(), dx.transpose());
+        // spdlog::info("iter {} total res: {}, eff: {}, mean res: {}, dxn: {}, dx: {}", iter, total_res, effective_num,
+        //              total_res / effective_num, dx.norm(), dx.transpose());
 
         // std::sort(chi2.begin(), chi2.end());
         //           << ", .9: " << chi2[chi2.size() * 0.9] << ", max: " << chi2.back();
@@ -192,7 +198,7 @@ bool Ndt3d::AlignNdt(SE3& init_pose) {
         }
 
         if (dx.norm() < options_.eps_) {
-            spdlog::info("converged, dx = {}", dx.transpose());
+            // spdlog::info("converged, dx = {}", dx.transpose());
             break;
         }
     }
