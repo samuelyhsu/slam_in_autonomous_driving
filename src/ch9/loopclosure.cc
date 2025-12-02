@@ -11,6 +11,7 @@
 #include <execution>
 #include "spdlog/spdlog.h"
 
+#include "ch7/ndt_3d.h"
 #include "common/lidar_utils.h"
 #include "common/point_cloud_utils.h"
 
@@ -30,6 +31,7 @@ bool LoopClosure::Init() {
     min_distance_ = yaml["loop_closing"]["min_distance"].as<double>();
     skip_id_ = yaml["loop_closing"]["skip_id"].as<int>();
     ndt_score_th_ = yaml["loop_closing"]["ndt_score_th"].as<double>();
+    use_pcl_ndt_ = yaml["use_pcl_ndt"].as<bool>();
     return true;
 }
 
@@ -101,7 +103,7 @@ void LoopClosure::ComputeLoopCandidates() {
 }
 
 void LoopClosure::ComputeForCandidate(sad::LoopCandidate& c) {
-    spdlog::info("aligning {} with {}", c.idx1_, c.idx2_);
+    // spdlog::info("aligning {} with {}", c.idx1_, c.idx2_);
     const int submap_idx_range = 40;
     KFPtr kf1 = keyframes_.at(c.idx1_), kf2 = keyframes_.at(c.idx2_);
 
@@ -151,34 +153,49 @@ void LoopClosure::ComputeForCandidate(sad::LoopCandidate& c) {
         return;
     }
 
-    pcl::NormalDistributionsTransform<PointType, PointType> ndt;
+    pcl::NormalDistributionsTransform<PointType, PointType> ndt_pcl;
 
-    ndt.setTransformationEpsilon(0.05);
-    ndt.setStepSize(0.7);
-    ndt.setMaximumIterations(40);
+    ndt_pcl.setTransformationEpsilon(0.05);
+    ndt_pcl.setStepSize(0.7);
+    ndt_pcl.setMaximumIterations(40);
 
-    Mat4f Tw2 = kf2->opti_pose_1_.matrix().cast<float>();
+    Ndt3d ndt;
+
+    auto pose = kf2->opti_pose_1_;
+    Mat4d Tw2;
 
     /// 不同分辨率下的匹配
     CloudPtr output(new PointCloudType);
     std::vector<double> res{10.0, 5.0, 4.0, 3.0};
     for (auto& r : res) {
-        ndt.setResolution(r);
         auto rough_map1 = VoxelCloud(submap_kf1, r * 0.1);
         auto rough_map2 = VoxelCloud(submap_kf2, r * 0.1);
-        ndt.setInputTarget(rough_map1);
-        ndt.setInputSource(rough_map2);
 
-        ndt.align(*output, Tw2);
-        Tw2 = ndt.getFinalTransformation();
+        if (use_pcl_ndt_) {
+            ndt_pcl.setResolution(r);
+            ndt_pcl.setInputTarget(rough_map1);
+            ndt_pcl.setInputSource(rough_map2);
+            ndt_pcl.align(*output, pose.matrix().cast<float>());
+            Tw2 = ndt_pcl.getFinalTransformation().cast<double>();
+        } else {
+            ndt.SetResolution(r);
+            ndt.SetTarget(rough_map1);
+            ndt.SetSource(rough_map2);
+            ndt.AlignNdt(pose);
+            Tw2 = pose.matrix();
+        }
     }
 
-    Mat4d T = Tw2.cast<double>();
-    Quatd q(T.block<3, 3>(0, 0));
+    Quatd q(Tw2.block<3, 3>(0, 0));
     q.normalize();
-    Vec3d t = T.block<3, 1>(0, 3);
+    Vec3d t = Tw2.block<3, 1>(0, 3);
     c.Tij_ = kf1->opti_pose_1_.inverse() * SE3(q, t);
-    c.ndt_score_ = ndt.getTransformationProbability();
+    if (use_pcl_ndt_) {
+        c.ndt_score_ = ndt_pcl.getTransformationProbability();
+    } else {
+        c.ndt_score_ = ndt.GetScore();
+    }
+    // spdlog::info("Loop closure candidate: {}-{}, ndt_score={}", c.idx1_, c.idx2_, c.ndt_score_);
 }
 
 void LoopClosure::SaveResults() {

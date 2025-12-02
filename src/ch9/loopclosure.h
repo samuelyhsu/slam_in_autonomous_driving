@@ -55,6 +55,8 @@ class LoopClosure {
     std::map<IdType, KFPtr> keyframes_;
 
     std::string yaml_;
+
+    bool use_pcl_ndt_;
 };
 }  // namespace sad
 
